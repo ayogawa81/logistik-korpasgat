@@ -2,13 +2,14 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kodal Logistik KORPASGAT - Command Center TNI AU</title>
+    <title>Kodal Logistik KORPASGAT - NKRI Full Coverage</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #000; color: white; display: flex; height: 100vh; overflow: hidden; }
         
+        /* Layout Sidebar */
         #sidebar { width: 450px; background: #001f3f; display: flex; flex-direction: column; border-right: 3px solid #ff851b; z-index: 1000; }
         #map-container { flex: 1; position: relative; background: #000; }
         #map { height: 100%; width: 100%; background: #011425; }
@@ -28,27 +29,26 @@
         .input-group label i { color: #fff; margin-right: 5px; }
         
         input, select { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
-        input[type="file"] { font-size: 0.8rem; border: 1px dashed #ff851b; padding: 5px; }
+        input[type="file"] { font-size: 0.8rem; background: #001224; border: 1px dashed #ff851b; padding: 5px; }
         
         button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; }
 
-        /* Visual Pesawat & Info */
+        /* Visual Pesawat & Info Besar */
         .plane-container { background: transparent; border: none; }
         .plane-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; }
         
-        /* Box Info Di Atas Pesawat (Nama, Foto, No Seri) */
         .plane-info-overlay { 
-            position: absolute; top: -85px; display: flex; flex-direction: column; align-items: center; 
-            background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 10px; border: 2px solid #ff851b;
-            min-width: 140px; text-align: center; pointer-events: none; box-shadow: 0 0 15px rgba(255,133,27,0.5);
+            position: absolute; top: -110px; display: flex; flex-direction: column; align-items: center; 
+            background: rgba(0,0,0,0.9); padding: 10px 15px; border-radius: 12px; border: 3px solid #ff851b;
+            min-width: 180px; text-align: center; pointer-events: none; box-shadow: 0 0 20px rgba(255,133,27,0.7);
         }
-        .plane-info-overlay img { width: 55px; height: 55px; border-radius: 50%; border: 2px solid #fff; margin-bottom: 5px; }
-        .plane-info-overlay .name { font-size: 13px; font-weight: bold; color: #fff; text-transform: uppercase; }
-        .plane-info-overlay .serial { font-size: 15px; font-weight: bold; color: #00ff00; font-family: monospace; }
+        .plane-info-overlay img { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; margin-bottom: 5px; object-fit: cover; }
+        .plane-info-overlay .name { font-size: 15px; font-weight: bold; color: #fff; text-transform: uppercase; margin-bottom: 2px; }
+        .plane-info-overlay .serial { font-size: 18px; font-weight: bold; color: #00ff00; font-family: monospace; letter-spacing: 1px; }
         
         .plane-status-label { 
-            position: absolute; bottom: -25px; background: #ff851b; color: #000; 
-            font-size: 11px; font-weight: bold; padding: 2px 10px; border-radius: 4px; white-space: nowrap;
+            position: absolute; bottom: -30px; background: #ff851b; color: #000; 
+            font-size: 13px; font-weight: bold; padding: 3px 12px; border-radius: 5px; white-space: nowrap;
         }
 
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
@@ -68,12 +68,12 @@
 
         <div class="form-section">
             <div class="input-group">
-                <label><i class="fa-solid fa-box"></i> Nama Misi</label>
-                <input type="text" id="inp_barang" placeholder="Contoh: Logistik Amunisi">
+                <label><i class="fa-solid fa-box"></i> Nama Misi / Logistik</label>
+                <input type="text" id="inp_barang" placeholder="Amunisi / Sembako">
             </div>
             <div class="input-group">
                 <label><i class="fa-solid fa-user-pilot"></i> Nama Personel On Board</label>
-                <input type="text" id="inp_kurir" placeholder="Contoh: Mayor Pnb Budi">
+                <input type="text" id="inp_kurir" placeholder="Nama Lengkap">
             </div>
             <div class="input-group">
                 <label><i class="fa-solid fa-plane"></i> Jenis & No Seri Pesawat</label>
@@ -84,16 +84,16 @@
                 <input type="file" id="inp_foto" accept="image/*">
             </div>
             <div class="input-group">
-                <label><i class="fa-solid fa-calendar-check"></i> Jadwal Berangkat</label>
+                <label><i class="fa-solid fa-calendar-check" style="color:#fff"></i> <i class="fa-solid fa-clock" style="color:#fff"></i> Jadwal Berangkat</label>
                 <input type="datetime-local" id="inp_waktu">
             </div>
             
-            <label style="color: #ff851b; font-size: 0.8rem; font-weight: bold; margin: 10px 0 5px 0; display: block;">NAVIGASI RUTE MULTI-TRANSIT</label>
-            <div class="input-group"><label>1. Pangkalan Asal (Wajib)</label><select id="inp_asal"></select></div>
-            <div class="input-group"><label>2. Transit 1 (Opsional)</label><select id="inp_transit1"></select></div>
-            <div class="input-group"><label>3. Transit 2 (Opsional)</label><select id="inp_transit2"></select></div>
-            <div class="input-group"><label>4. Tujuan Akhir (Wajib)</label><select id="inp_tujuan"></select></div>
-            <div class="input-group"><label>5. Kembali ke Base (Opsional)</label><select id="inp_kembali"></select></div>
+            <label style="color: #ff851b; font-size: 0.8rem; font-weight: bold; margin: 10px 0 5px 0; display: block;">NAVIGASI RUTE (SELURUH INDONESIA)</label>
+            <div class="input-group"><label>1. Pangkalan Asal</label><select id="inp_asal"></select></div>
+            <div class="input-group"><label>2. Transit 1</label><select id="inp_transit1"></select></div>
+            <div class="input-group"><label>3. Transit 2</label><select id="inp_transit2"></select></div>
+            <div class="input-group"><label>4. Tujuan Akhir</label><select id="inp_tujuan"></select></div>
+            <div class="input-group"><label>5. Kembali ke Base</label><select id="inp_kembali"></select></div>
             
             <button class="btn-tambah" onclick="prosesTambahPenerbangan()">➕ AKTIVASI MISI</button>
         </div>
@@ -105,18 +105,38 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Database Bandara Lengkap (TNI AU & Komersial)
         const daftarBandara = [
-            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
+            // SUMATERA & PULAU TERLUAR BARAT
+            { nama: "Sabang (SBG) - Lanud Maimun Saleh", lat: 5.8753, lng: 95.3375 },
+            { nama: "Banda Aceh (BTJ) - Lanud Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
             { nama: "Medan (MES) - Lanud Soewondo", lat: 3.5623, lng: 98.6837 },
             { nama: "Pekanbaru (PKU) - Lanud Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
+            { nama: "Ranai (NTX) - Lanud Raden Sadjad (Natuna)", lat: 3.9453, lng: 108.3871 },
+            { nama: "Tanjung Pinang (TNJ) - Lanud R.H. Fisabilillah", lat: 0.9174, lng: 104.5319 },
+            { nama: "Palembang (PLM) - Lanud Sri Mulyono Herlambang", lat: -2.8981, lng: 104.7001 },
+            // JAWA
             { nama: "Jakarta (HLP) - Lanud Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
+            { nama: "Subang (SUA) - Lanud Suryadarma", lat: -6.5333, lng: 107.6500 },
             { nama: "Bandung (BDO) - Lanud Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
             { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
             { nama: "Malang (MLG) - Lanud Abdul Rachman Saleh", lat: -7.9264, lng: 112.7135 },
+            { nama: "Yogyakarta (JOG) - Lanud Adisutjipto", lat: -7.7844, lng: 110.4316 },
+            // KALIMANTAN & UTARA
+            { nama: "Pontianak (PNK) - Lanud Supadio", lat: -0.1507, lng: 109.4039 },
+            { nama: "Balikpapan (BPN) - Lanud Dhomber", lat: -1.2683, lng: 116.8944 },
+            { nama: "Tarakan (TRK) - Lanud Anang Busra", lat: 3.3262, lng: 117.5647 },
+            // SULAWESI & TENGAH
             { nama: "Makassar (UPG) - Lanud Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
+            { nama: "Manado (MDC) - Lanud Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
+            { nama: "Morotai (OTI) - Lanud Leo Wattimena", lat: 2.0461, lng: 128.3283 },
+            // NUSA TENGGARA & BALI
+            { nama: "Kupang (KOE) - Lanud El Tari", lat: -10.1705, lng: 123.6653 },
+            { nama: "Selaru (LUV) - Bandara Mathilda Galery (Terluar)", lat: -8.1738, lng: 131.7371 },
+            // MALUKU & PAPUA (TIMUR)
+            { nama: "Ambon (AMQ) - Lanud Pattimura", lat: -3.7049, lng: 128.0890 },
             { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 },
             { nama: "Jayapura (DJJ) - Lanud Silas Papare", lat: -2.5765, lng: 140.5158 },
+            { nama: "Timika (TIM) - Lanud Yohanis Kapiyau", lat: -4.5296, lng: 136.8870 },
             { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
         ];
 
@@ -141,7 +161,8 @@
 
         async function prosesTambahPenerbangan() {
             const kurir = document.getElementById('inp_kurir').value || "Crew TNI AU";
-            const pesawat = document.getElementById('inp_pesawat').value || "Hercules C-130";
+            const pesawat = document.getElementById('inp_pesawat').value || "C-130 Hercules";
+            const barang = document.getElementById('inp_barang').value || "Logistik";
             const waktuDep = new Date(document.getElementById('inp_waktu').value);
             
             const file = document.getElementById('inp_foto').files[0];
@@ -164,21 +185,21 @@
                         <div class="name">${kurir}</div>
                         <div class="serial">${pesawat}</div>
                     </div>
-                    <svg viewBox="0 0 100 100" width="75" height="75" style="transform: rotate(${angle}deg);">
-                        <g fill="${warna}" stroke="#fff" stroke-width="1.5">
+                    <svg viewBox="0 0 100 100" width="80" height="80" style="transform: rotate(${angle}deg);">
+                        <g fill="${warna}" stroke="#fff" stroke-width="2">
                             <path d="M42 15 Q50 5 58 15 L58 85 Q50 95 42 85 Z" />
                             <path d="M58 40 L98 46 L98 54 L58 50 Z" />
                             <path d="M42 40 L2 46 L2 54 L42 50 Z" />
                         </g>
                     </svg>
-                    <div class="plane-status-label">AIRBORNE - MISI AKTIF</div>
+                    <div class="plane-status-label" id="status-${flightCounter}">BERANGKAT</div>
                 </div>`;
 
             const flight = {
                 id: flightCounter++, rute, marker: L.marker([rute[0].lat, rute[0].lng], {
-                    icon: L.divIcon({ html: markerHTML, className: 'plane-container', iconSize: [140, 160], iconAnchor: [70, 115] })
+                    icon: L.divIcon({ html: markerHTML, className: 'plane-container', iconSize: [180, 200], iconAnchor: [90, 140] })
                 }).addTo(map),
-                line: L.polyline(rute.map(t=>[t.lat,t.lng]), {color:warna, weight:3, dashArray:'5,10'}).addTo(map)
+                line: L.polyline(rute.map(t=>[t.lat,t.lng]), {color:warna, weight:4, dashArray:'10,15'}).addTo(map)
             };
             flights.push(flight); renderSidebar();
         }
@@ -186,7 +207,7 @@
         function renderSidebar() {
             const list = document.getElementById('flight-list'); list.innerHTML = "";
             [...flights].reverse().forEach(f => {
-                list.innerHTML += `<div class="flight-card" style="border-left-color:${f.marker.options.icon.options.html.match(/fill="([^"]+)"/)[1]}">Misi Aktif: ${f.id + 1} <button onclick="map.removeLayer(flights[${f.id}].marker); map.removeLayer(flights[${f.id}].line); flights.splice(${f.id},1); renderSidebar();" style="float:right;background:none;border:none;color:red;cursor:pointer">❌</button></div>`;
+                list.innerHTML += `<div class="flight-card" style="border-left-color:${warnaMisi[f.id % warnaMisi.length]}">Misi Aktif: ${f.id + 1} <button onclick="map.removeLayer(flights[${f.id}].marker); map.removeLayer(flights[${f.id}].line); flights.splice(${f.id},1); renderSidebar();" style="float:right;background:none;border:none;color:red;cursor:pointer">❌</button></div>`;
             });
         }
 
