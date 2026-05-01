@@ -48,7 +48,6 @@
         .btn-batal { background: #dc3545; color: white; border: none; padding: 4px 6px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; font-weight: bold; transition: 0.2s;}
         .btn-batal:hover { background: #c82333; }
         
-        /* Tombol Komando Lanjut Terbang */
         .btn-lanjut { background: #17a2b8; color: white; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: bold; width: 100%; margin-top: 5px; transition: 0.2s; border: 1px solid #117a8b; animation: pulse 1.5s infinite;}
         .btn-lanjut:hover { background: #138496; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
@@ -196,8 +195,16 @@
         nowLocal.setMinutes(nowLocal.getMinutes() - nowLocal.getTimezoneOffset());
         document.getElementById('inp_waktu').value = nowLocal.toISOString().slice(0, 16);
 
+        // --- PENGATURAN MAP CENTER & ZOOM OTOMATIS (FIT BOUNDS) ---
         const indonesiaBounds = L.latLngBounds([-11.0, 94.0], [6.0, 141.0]);
-        const map = L.map('map', { center: [-2.5, 118], zoom: 5, minZoom: 5, maxBounds: indonesiaBounds, maxBoundsViscosity: 1.0 });
+        const map = L.map('map', { 
+            minZoom: 4, 
+            maxBounds: indonesiaBounds, 
+            maxBoundsViscosity: 1.0 
+        });
+        
+        // Memaksa peta tampil pas tepat di tengah layar sesuai ukuran monitor
+        map.fitBounds(indonesiaBounds);
 
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }).addTo(map);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }).addTo(map);
@@ -237,7 +244,7 @@
                 document.getElementById('inp_transit1').value,
                 document.getElementById('inp_transit2').value,
                 document.getElementById('inp_tujuan').value,
-                document.getElementById('inp_kembali').value // Tambahan Tujuan Kembali
+                document.getElementById('inp_kembali').value
             ];
 
             const ruteValid = [];
@@ -251,7 +258,6 @@
 
             if(ruteValid.length < 2) return alert("Pilih minimal Asal dan Tujuan yang berbeda!");
 
-            // Gambar rute di peta secara full
             const jalurPolyline = ruteValid.map(t => [t.lat, t.lng]);
             const namaRuteFull = ruteValid.map(t => t.nama.split('-')[0].trim()).join(' ➔ ');
             const warna = warnaMisi[flightCounter % warnaMisi.length];
@@ -262,13 +268,11 @@
             const titikAwal = ruteValid[0];
             const titikDua = ruteValid[1];
             
-            // Kalkulasi Waktu Khusus Etape 1 Saja (karena etape selanjutnya nunggu komando manual)
             const jarakEtape1 = hitungJarak(titikAwal.lat, titikAwal.lng, titikDua.lat, titikDua.lng);
             const durasiEtape1Ms = (jarakEtape1 / KECEPATAN_PESAWAT_KMH) * 60 * 60 * 1000;
             const arrEtape1 = new Date(waktuDep.getTime() + durasiEtape1Ms);
             const angleAwal = Math.atan2(titikDua.lng - titikAwal.lng, titikDua.lat - titikAwal.lat) * 180 / Math.PI;
 
-            // Desain SVG HERCULES C-130
             const markerHTML = `
                 <div class="plane-box">
                     <img src="${fotoBase64}" class="plane-avatar" style="border-color: ${warna};">
@@ -296,16 +300,12 @@
                 barang, kurir, fotoUrl: fotoBase64, warna: warna,
                 ruteData: ruteValid,
                 namaRuteFull: namaRuteFull,
-                
-                // State Machine Variables
-                status: "MENUNGGU_AWAL", // MENUNGGU_AWAL, TERBANG, TRANSIT, SELESAI
-                currentLeg: 0, // Sedang menempuh etape ke-berapa (0 = etape pertama)
+                status: "MENUNGGU_AWAL",
+                currentLeg: 0, 
                 legDepTime: waktuDep,
                 legArrTime: arrEtape1,
                 angle: angleAwal,
-                
-                waktuDepAwal: waktuDep, // Simpan untuk text UI
-
+                waktuDepAwal: waktuDep,
                 marker: L.marker([titikAwal.lat, titikAwal.lng], {icon: customIcon, opacity: 0}).addTo(map),
                 line: L.polyline(jalurPolyline, { color: warna, weight: 3, dashArray: '6, 8' }).addTo(map),
             };
@@ -316,20 +316,17 @@
             document.getElementById('inp_barang').value = "";
             document.getElementById('inp_kurir').value = "";
             document.getElementById('inp_foto').value = "";
-            document.getElementById('inp_kembali').value = ""; // Reset opsi kembali
+            document.getElementById('inp_kembali').value = ""; 
         }
 
-        // --- FUNGSI KOMANDO LANJUT TERBANG (DARI TRANSIT) ---
         window.lanjutTerbang = function(id) {
             const f = flights.find(x => x.id === id);
             if(f && f.status === "TRANSIT") {
-                f.currentLeg++; // Maju ke etape berikutnya
-                
+                f.currentLeg++; 
                 const start = f.ruteData[f.currentLeg];
                 const end = f.ruteData[f.currentLeg + 1];
                 
-                f.legDepTime = new Date(); // Berangkat sekarang (real-time button click)
-                
+                f.legDepTime = new Date(); 
                 const jarakKm = hitungJarak(start.lat, start.lng, end.lat, end.lng);
                 const durasiMs = (jarakKm / KECEPATAN_PESAWAT_KMH) * 60 * 60 * 1000;
                 f.legArrTime = new Date(f.legDepTime.getTime() + durasiMs);
@@ -337,7 +334,7 @@
                 f.angle = Math.atan2(end.lng - start.lng, end.lat - start.lat) * 180 / Math.PI;
                 f.status = "TERBANG";
                 
-                renderSidebar(); // Hilangkan tombol dan perbarui UI
+                renderSidebar(); 
             }
         };
 
@@ -358,7 +355,6 @@
             [...flights].reverse().forEach(f => {
                 const depStr = f.waktuDepAwal.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
                 
-                // Inject Tombol Berangkat jika sedang transit
                 let tombolHtml = "";
                 if (f.status === "TRANSIT") {
                     const nextDest = f.ruteData[f.currentLeg + 1].nama.split('-')[0].trim();
@@ -394,7 +390,6 @@
             });
         }
 
-        // Animasi Loop Tiap 1 Detik
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID') + " WIB";
@@ -407,7 +402,7 @@
                 if (f.status === "MENUNGGU_AWAL") {
                     if (now >= f.legDepTime) {
                         f.status = "TERBANG";
-                        renderSidebar(); // Panggil ulang untuk mengubah UI
+                        renderSidebar(); 
                     } else {
                         f.marker.setOpacity(0);
                         if(badge) { badge.className = "status-badge status-menunggu"; badge.innerText = "MENUNGGU JADWAL"; }
@@ -417,19 +412,16 @@
                     f.marker.setOpacity(1); 
                     
                     if (now >= f.legArrTime) {
-                        // Telah Sampai di Ujung Etape
                         if (f.currentLeg < f.ruteData.length - 2) {
                             f.status = "TRANSIT";
                             const spot = f.ruteData[f.currentLeg + 1];
                             f.marker.setLatLng([spot.lat, spot.lng]);
                             
-                            // Normalkan ukuran pesawat
                             const svg = document.getElementById(`svg-${f.id}`);
                             if(svg) svg.style.transform = `rotate(${f.angle}deg) scale(1)`;
                             
-                            renderSidebar(); // Munculkan tombol Lanjut Terbang
+                            renderSidebar(); 
                         } else {
-                            // Selesai seluruh rute
                             f.status = "SELESAI";
                             const spot = f.ruteData[f.currentLeg + 1];
                             f.marker.setLatLng([spot.lat, spot.lng]);
@@ -441,7 +433,6 @@
                             renderSidebar();
                         }
                     } else {
-                        // Sedang proses di udara
                         const durasiLeg = f.legArrTime.getTime() - f.legDepTime.getTime();
                         const durasiBerjalan = now.getTime() - f.legDepTime.getTime();
                         const prog = durasiBerjalan / durasiLeg;
@@ -453,7 +444,6 @@
                         const lng = start.lng + (end.lng - start.lng) * prog;
                         f.marker.setLatLng([lat, lng]);
 
-                        // Efek melayang 3D
                         const scale = 1 + (Math.sin(prog * Math.PI) * 0.8);
                         const svg = document.getElementById(`svg-${f.id}`);
                         if(svg) svg.style.transform = `rotate(${f.angle}deg) scale(${scale})`;
@@ -464,7 +454,6 @@
                     }
                 }
                 else if (f.status === "TRANSIT") {
-                    // Update tampilan pasif saja, nunggu tombol di-klik
                     const cityName = f.ruteData[f.currentLeg + 1].nama.split('-')[0].trim();
                     if(badge) { badge.className = "status-badge status-transit"; badge.innerText = `STANDBY DI ${cityName.toUpperCase()}`; }
                     if(progBar) progBar.style.width = "100%";
