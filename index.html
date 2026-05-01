@@ -119,7 +119,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const daftarBandara = [
-          // SUMATERA & BARAT
+            // SUMATERA & BARAT
             { nama: "Sabang (SBG) - Lanud Maimun Saleh", lat: 5.8753, lng: 95.3375 },
             { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
             { nama: "Medan (MES) - Lanud Soewondo", lat: 3.5623, lng: 98.6837 },
@@ -149,7 +149,7 @@
             { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
         ];
 
-        // URL GAMBAR PESAWAT ASLI TNI AU (Ganti ke aset GitHub Anda)
+        // URL GAMBAR PESAWAT ASLI TNI AU
         const URL_FOTO_HERCULES = "https://raw.githubusercontent.com/ayo-gawer81/logistik-korpasgat/main/hercules-top.png";
 
         function isiDropdown() {
@@ -261,6 +261,7 @@
             document.getElementById('date-live').innerHTML = `<i class="fa-solid fa-calendar-day"></i> ` + now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
             flights.forEach(f => { 
                 if (f.status === "STANDBY" && now >= f.depTime) { f.status = "TERBANG"; f.marker.setOpacity(1); }
+                if (f.status === "TERBANG" && (now - f.depTime) > 3600000) { f.status = f.currentLeg < f.rute.length-2 ? "TRANSIT" : "SELESAI"; renderSidebar(); }
             });
         }, 1000);
     </script>
