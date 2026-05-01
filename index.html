@@ -6,62 +6,146 @@
     <style>
         body { margin: 0; font-family: sans-serif; background: #001f3f; color: white; }
         #map { height: 70vh; width: 100%; }
-        .control-panel { padding: 20px; background: #002d5a; display: flex; gap: 10px; justify-content: center; }
-        input, button { padding: 10px; font-size: 1.1rem; border-radius: 5px; border: none; }
-        button { background: #ff851b; color: white; cursor: pointer; font-weight: bold; }
-        h2 { text-align: center; margin: 10px 0; }
+        .control-panel { padding: 20px; background: #002d5a; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+        input, select, button { padding: 10px; font-size: 1rem; border-radius: 5px; border: none; }
+        button { background: #ff851b; color: white; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #e07015; }
+        h2 { text-align: center; margin: 15px 0; letter-spacing: 2px; }
+        
+        /* Hilangkan background default Leaflet untuk marker custom */
+        .plane-container { background: transparent; border: none; }
+        
+        /* Efek bayangan untuk memperkuat kesan 3D */
+        .plane-svg { filter: drop-shadow(3px 5px 4px rgba(0,0,0,0.6)); }
     </style>
 </head>
 <body>
 
-    <h2>MONITORING PENGIRIMAN LOGISTIK</h2>
+    <h2>MONITORING PENGIRIMAN LOGISTIK 3D</h2>
     <div id="map"></div>
 
     <div class="control-panel">
-        <input type="text" id="barang" placeholder="Nama Barang">
-        <select id="tujuan">
+        <input type="text" id="barang" placeholder="Nama Barang (opsional)">
+        
+        <select id="asal">
+            <option value="" disabled selected>Pilih Asal Keberangkatan</option>
             <option value="-6.12,106.65">Jakarta (CGK)</option>
             <option value="-7.37,112.78">Surabaya (SUB)</option>
             <option value="-1.26,116.89">Balikpapan (BPN)</option>
             <option value="-5.06,119.55">Makassar (UPG)</option>
             <option value="-2.57,140.51">Jayapura (DJJ)</option>
         </select>
-        <button onclick="kirimBarang()">Kirim Pesawat</button>
+
+        <span style="font-weight: bold;">➔</span>
+
+        <select id="tujuan">
+            <option value="" disabled selected>Pilih Tujuan Pendaratan</option>
+            <option value="-6.12,106.65">Jakarta (CGK)</option>
+            <option value="-7.37,112.78">Surabaya (SUB)</option>
+            <option value="-1.26,116.89">Balikpapan (BPN)</option>
+            <option value="-5.06,119.55">Makassar (UPG)</option>
+            <option value="-2.57,140.51">Jayapura (DJJ)</option>
+        </select>
+
+        <button onclick="kirimBarang()">✈️ Terbangkan Pesawat</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Inisialisasi Peta Indonesia
+        // 1. Inisialisasi Peta
         const map = L.map('map').setView([-2.5, 118], 5);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // 2. Gunakan Layer Satelit Esri (Mirip Google Earth)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP'
+        }).addTo(map);
+
+        let currentMarker = null;
+        let currentLine = null;
 
         function kirimBarang() {
-            const barang = document.getElementById('barang').value;
-            const tujuanCoord = document.getElementById('tujuan').value.split(',').map(Number);
-            const asalCoord = [-6.12, 106.65]; // Default berangkat dari Jakarta
+            const barang = document.getElementById('barang').value || "Logistik";
+            const asalSelect = document.getElementById('asal').value;
+            const tujuanSelect = document.getElementById('tujuan').value;
 
-            // 1. Tambah Marker Pesawat
-            const planeIcon = L.divIcon({html: '✈️', className: 'plane-icon', iconSize: [30, 30]});
-            const marker = L.marker(asalCoord, {icon: planeIcon}).addTo(map);
-            
-            // 2. Gambar Jalur
-            const line = L.polyline([asalCoord, tujuanCoord], {color: 'yellow', dashArray: '5, 10'}).addTo(map);
+            if (!asalSelect || !tujuanSelect) {
+                alert("Harap pilih Asal dan Tujuan terlebih dahulu!");
+                return;
+            }
+            if (asalSelect === tujuanSelect) {
+                alert("Titik asal dan tujuan tidak boleh sama!");
+                return;
+            }
 
-            // 3. Animasi Sederhana
+            const asalCoord = asalSelect.split(',').map(Number);
+            const tujuanCoord = tujuanSelect.split(',').map(Number);
+
+            // Bersihkan marker/garis sebelumnya jika ada
+            if (currentMarker) map.removeLayer(currentMarker);
+            if (currentLine) map.removeLayer(currentLine);
+
+            // Hitung rotasi sudut agar pesawat menghadap ke tujuan
+            const dy = tujuanCoord[0] - asalCoord[0];
+            const dx = tujuanCoord[1] - asalCoord[1];
+            const angle = Math.atan2(dx, dy) * 180 / Math.PI;
+
+            // Gambar Garis Jalur
+            currentLine = L.polyline([asalCoord, tujuanCoord], {
+                color: '#ff851b', 
+                weight: 2,
+                dashArray: '5, 10'
+            }).addTo(map);
+
+            // Buat Marker Pesawat dengan SVG (kualitas HD)
+            const planeSVG = `
+                <div id="plane-graphic" style="transform: rotate(${angle}deg) scale(1); transition: transform 0.05s linear;">
+                    <svg class="plane-svg" viewBox="0 0 24 24" width="40" height="40" fill="white" stroke="#ff851b" stroke-width="1.5">
+                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                    </svg>
+                </div>
+            `;
+
+            const planeIcon = L.divIcon({
+                html: planeSVG,
+                className: 'plane-container',
+                iconSize: [40, 40],
+                iconAnchor: [20, 20] // Titik tengah pesawat
+            });
+
+            currentMarker = L.marker(asalCoord, {icon: planeIcon}).addTo(map);
+
+            // Animasi Terbang (Ilusi 3D dengan Scale)
             let progress = 0;
             const interval = setInterval(() => {
-                progress += 0.01;
+                progress += 0.01; // Kecepatan pesawat
+
+                // Hitung pergerakan koordinat
                 const lat = asalCoord[0] + (tujuanCoord[0] - asalCoord[0]) * progress;
                 const lng = asalCoord[1] + (tujuanCoord[1] - asalCoord[1]) * progress;
-                marker.setLatLng([lat, lng]);
+                currentMarker.setLatLng([lat, lng]);
 
+                // Hitung Ketinggian Terbang (Efek Scale Parabola)
+                // Pesawat akan membesar hingga 2.5x di tengah jalan, lalu mengecil lagi
+                const altitudeScale = 1 + (Math.sin(progress * Math.PI) * 1.5);
+                
+                // Terapkan rotasi dan skala (ketinggian) secara real-time
+                const graphic = document.getElementById('plane-graphic');
+                if(graphic) {
+                    graphic.style.transform = `rotate(${angle}deg) scale(${altitudeScale})`;
+                }
+
+                // Jika pesawat sudah sampai
                 if (progress >= 1) {
                     clearInterval(interval);
-                    alert("Barang: " + barang + " Telah Tiba di Tujuan!");
+                    // Pastikan ukuran kembali normal saat mendarat
+                    if(graphic) graphic.style.transform = `rotate(${angle}deg) scale(1)`; 
+                    
+                    setTimeout(() => {
+                        alert(`Misi Selesai!\n${barang} telah mendarat di tujuan.`);
+                    }, 300);
                 }
-            }, 50);
+            }, 50); // Frame rate animasi (semakin kecil semakin mulus)
         }
     </script>
 </body>
 </html>
-
