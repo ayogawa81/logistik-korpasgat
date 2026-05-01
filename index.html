@@ -21,9 +21,11 @@
         .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
         .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
         
-        #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 10px; }
+        /* STYLE TANGGAL & JAM */
+        #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
+        #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
 
-        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 50vh; }
+        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 45vh; }
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
         
@@ -52,6 +54,8 @@
     <div id="sidebar">
         <div class="header">
             <h2>KODAL LOGISTIK KORPASGAT</h2>
+            <!-- POSISI TANGGAL YANG DIKEMBALIKAN -->
+            <div id="date-live">-- --- ----</div>
             <div id="clock-live">00:00:00</div>
         </div>
 
@@ -164,19 +168,16 @@
             const kurir = document.getElementById('inp_kurir').value || "Crew TNI AU";
             const depTime = new Date(document.getElementById('inp_waktu').value);
             
-            // Foto Processing
             const file = document.getElementById('inp_foto').files[0];
             let fotoUrl = "https://ui-avatars.com/api/?name=" + kurir.replace(' ','+');
             if (file) fotoUrl = await new Promise(r => { const f=new FileReader(); f.onload=e=>r(e.target.result); f.readAsDataURL(file); });
 
-            // Rute Processing
             const ruteRaw = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'].map(id => document.getElementById(id).value);
             const rute = [];
             ruteRaw.forEach(val => {
                 if(val){ const d=val.split(','); rute.push({lat:parseFloat(d[0]), lng:parseFloat(d[1]), nama:d[2]}); }
             });
 
-            // Kalkulasi Jarak & ETA
             let totalDist = 0;
             for(let i=0; i<rute.length-1; i++) totalDist += calculateDistance(rute[i].lat, rute[i].lng, rute[i+1].lat, rute[i+1].lng);
             const durationHours = totalDist / SPEED_HERCULES;
@@ -235,7 +236,10 @@
 
         setInterval(() => {
             const now = new Date();
+            // UPDATE TANGGAL & JAM
+            document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
             document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
+            
             flights.forEach(f => {
                 if (f.status === "STANDBY" && now >= f.depTime) db.ref('misi_logistik/' + f.fbId).update({ status: "AIRBORNE" });
                 if (f.status === "AIRBORNE" && now >= f.eta) db.ref('misi_logistik/' + f.fbId).update({ status: "ARRIVED" });
