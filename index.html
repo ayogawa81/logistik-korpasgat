@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kodal Logistik KORPASGAT - Command Center</title>
+    <title>Kodal Logistik KORPASGAT - Command Center TV</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
@@ -36,9 +36,12 @@
 
         /* Flight Cards */
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
-        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 8px; padding: 12px; margin-bottom: 15px; box-shadow: 0 6px 12px rgba(0,0,0,0.6); }
+        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 8px; padding: 12px; margin-bottom: 15px; box-shadow: 0 6px 12px rgba(0,0,0,0.6); position: relative; }
         .card-body { display: flex; gap: 10px; align-items: center; }
         .card-body img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid; }
+
+        .btn-lanjut { background: #17a2b8; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .plane-id-label { background: rgba(0,0,0,0.8); color: #00ff00; font-size: 11px; font-weight: bold; padding: 2px 5px; border-radius: 4px; border: 1px solid #ff851b; white-space: nowrap; }
     </style>
@@ -89,18 +92,29 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Database Bandara Lengkap Indonesia
         const daftarBandara = [
+            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
+            { nama: "Medan (KNO) - Kualanamu", lat: 3.6353, lng: 98.8807 },
+            { nama: "Pekanbaru (PKU) - Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
+            { nama: "Palembang (PLM) - SMB II", lat: -2.8981, lng: 104.7001 },
             { nama: "Jakarta (HLP) - Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
-            { nama: "Madiun (IWX) - Iswahjudi", lat: -7.6158, lng: 111.4338 },
-            { nama: "Malang (MLG) - Abdul Rachman Saleh", lat: -7.9264, lng: 112.7135 },
+            { nama: "Jakarta (CGK) - Soekarno Hatta", lat: -6.1256, lng: 106.6558 },
+            { nama: "Bandung (BDO) - Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
+            { nama: "Surabaya (SUB) - Juanda", lat: -7.3798, lng: 112.7874 },
+            { nama: "Yogyakarta (YIA) - Kulon Progo", lat: -7.9008, lng: 110.0519 },
+            { nama: "Denpasar (DPS) - Ngurah Rai", lat: -8.7481, lng: 115.1671 },
+            { nama: "Lombok (LOP) - Zainuddin AM", lat: -8.7582, lng: 116.2753 },
+            { nama: "Balikpapan (BPN) - Sepinggan", lat: -1.2683, lng: 116.8944 },
             { nama: "Makassar (UPG) - Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
-            { nama: "Jayapura (DJJ) - Silas Papare", lat: -2.5765, lng: 140.5158 },
-            { nama: "Biak (BIK) - Manuhua", lat: -1.1911, lng: 136.1086 },
+            { nama: "Manado (MDC) - Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
             { nama: "Kupang (KOE) - El Tari", lat: -10.1705, lng: 123.6653 },
             { nama: "Ambon (AMQ) - Pattimura", lat: -3.7049, lng: 128.0890 },
-            { nama: "Medan (MES) - Soewondo", lat: 3.5623, lng: 98.6837 },
-            { nama: "Pekanbaru (PKU) - Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
-            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 }
+            { nama: "Sorong (SOQ) - Domine EO", lat: -0.8845, lng: 131.2870 },
+            { nama: "Biak (BIK) - Manuhua", lat: -1.1911, lng: 136.1086 },
+            { nama: "Timika (TIM) - Yohanis Kapiyau", lat: -4.5296, lng: 136.8870 },
+            { nama: "Jayapura (DJJ) - Silas Papare", lat: -2.5765, lng: 140.5158 },
+            { nama: "Merauke (MKQ) - Mopah", lat: -8.5208, lng: 140.4184 }
         ];
 
         function isiDropdown() {
@@ -120,6 +134,7 @@
 
         let flights = [];
         let flightCounter = 0;
+        const SPEED_KMH = 650;
         const warnaMisi = ['#ff851b', '#00e5ff', '#39ff14', '#ff007f'];
 
         function setRealTime() {
@@ -146,10 +161,10 @@
             const angle = Math.atan2(rute[1].lng - rute[0].lng, rute[1].lat - rute[0].lat) * 180 / Math.PI;
 
             const flight = {
-                id: flightCounter++, tailNo, barang, kurir, warna, rute, fotoUrl, status: "STANDBY", currentLeg: 0,
+                id: flightCounter++, tailNo, barang, kurir, warna, rute, fotoUrl, status: "AWAL", currentLeg: 0,
                 legDepTime: waktuDep, marker: L.marker([rute[0].lat, rute[0].lng], {
                     icon: L.divIcon({
-                        html: `<div style="text-align:center"><div class="plane-id-label">${tailNo}</div><svg viewBox="0 0 100 100" width="60" height="60" style="transform: rotate(${angle}deg);"><g fill="${warna}" stroke="#fff"><path d="M42 15 Q50 5 58 15 L58 85 Q50 95 42 85 Z" /><path d="M58 40 L98 46 L98 54 L58 50 Z" /><path d="M42 40 L2 46 L2 54 L42 50 Z" /></g></svg></div>`,
+                        html: `<div style="text-align:center"><div class="plane-id-label" id="label-${flightCounter-1}">${tailNo} - BERANGKAT</div><svg viewBox="0 0 100 100" width="60" height="60" style="transform: rotate(${angle}deg);"><g fill="${warna}" stroke="#fff"><path d="M42 15 Q50 5 58 15 L58 85 Q50 95 42 85 Z" /><path d="M58 40 L98 46 L98 54 L58 50 Z" /><path d="M42 40 L2 46 L2 54 L42 50 Z" /></g></svg></div>`,
                         className: '', iconSize: [60, 80], iconAnchor: [30, 40]
                     }), opacity: 0
                 }).addTo(map),
@@ -157,6 +172,22 @@
             };
             flights.push(flight); renderSidebar();
         }
+
+        window.lanjutTerbang = id => {
+            const f = flights.find(x => x.id === id);
+            if(f && f.status === "TRANSIT") { 
+                f.currentLeg++; 
+                f.legDepTime = new Date(); 
+                f.status = "TERBANG"; 
+                const label = document.getElementById(`label-${f.id}`);
+                if (f.currentLeg === f.rute.length - 2) {
+                    label.innerText = `${f.tailNo} - BALIK BASE`;
+                } else {
+                    label.innerText = `${f.tailNo} - TRANSIT ${f.currentLeg}`;
+                }
+                renderSidebar(); 
+            }
+        };
 
         function renderSidebar() {
             const list = document.getElementById('flight-list'); list.innerHTML = "";
@@ -171,6 +202,7 @@
                             </div>
                             <button onclick="hapusPenerbangan(${f.id})" style="background:none; border:none; color:red; cursor:pointer">❌</button>
                         </div>
+                        ${f.status==="TRANSIT"?`<button class="btn-lanjut" onclick="lanjutTerbang(${f.id})">🛫 LANJUT TERBANG</button>`:''}
                         <button class="btn-focus" style="width:100%; margin-top:5px; background:#007bff; border:none; color:white; padding:5px; border-radius:4px; cursor:pointer" onclick="map.setView(flights.find(x=>x.id===${f.id}).marker.getLatLng(), 8)">🎯 FOCUS TRACK</button>
                     </div>`;
             });
@@ -186,7 +218,7 @@
             const now = new Date();
             document.getElementById('clock-live').innerHTML = `<i class="fa-solid fa-clock"></i> ` + now.toLocaleTimeString('id-ID') + " WIB";
             document.getElementById('date-live').innerHTML = `<i class="fa-solid fa-calendar-day"></i> ` + now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
-            flights.forEach(f => { if (f.status === "STANDBY" && now >= f.legDepTime) { f.status = "TERBANG"; f.marker.setOpacity(1); } });
+            flights.forEach(f => { if (f.status === "AWAL" && now >= f.legDepTime) { f.status = "TERBANG"; f.marker.setOpacity(1); } });
         }, 1000);
     </script>
 </body>
