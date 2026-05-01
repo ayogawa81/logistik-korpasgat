@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Logistik KORPASGAT</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; font-family: sans-serif; background: #001f3f; color: white; }
+        #map { height: 70vh; width: 100%; }
+        .control-panel { padding: 20px; background: #002d5a; display: flex; gap: 10px; justify-content: center; }
+        input, button { padding: 10px; font-size: 1.1rem; border-radius: 5px; border: none; }
+        button { background: #ff851b; color: white; cursor: pointer; font-weight: bold; }
+        h2 { text-align: center; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+    <h2>MONITORING PENGIRIMAN LOGISTIK</h2>
+    <div id="map"></div>
+
+    <div class="control-panel">
+        <input type="text" id="barang" placeholder="Nama Barang">
+        <select id="tujuan">
+            <option value="-6.12,106.65">Jakarta (CGK)</option>
+            <option value="-7.37,112.78">Surabaya (SUB)</option>
+            <option value="-1.26,116.89">Balikpapan (BPN)</option>
+            <option value="-5.06,119.55">Makassar (UPG)</option>
+            <option value="-2.57,140.51">Jayapura (DJJ)</option>
+        </select>
+        <button onclick="kirimBarang()">Kirim Pesawat</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Inisialisasi Peta Indonesia
+        const map = L.map('map').setView([-2.5, 118], 5);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        function kirimBarang() {
+            const barang = document.getElementById('barang').value;
+            const tujuanCoord = document.getElementById('tujuan').value.split(',').map(Number);
+            const asalCoord = [-6.12, 106.65]; // Default berangkat dari Jakarta
+
+            // 1. Tambah Marker Pesawat
+            const planeIcon = L.divIcon({html: '✈️', className: 'plane-icon', iconSize: [30, 30]});
+            const marker = L.marker(asalCoord, {icon: planeIcon}).addTo(map);
+            
+            // 2. Gambar Jalur
+            const line = L.polyline([asalCoord, tujuanCoord], {color: 'yellow', dashArray: '5, 10'}).addTo(map);
+
+            // 3. Animasi Sederhana
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 0.01;
+                const lat = asalCoord[0] + (tujuanCoord[0] - asalCoord[0]) * progress;
+                const lng = asalCoord[1] + (tujuanCoord[1] - asalCoord[1]) * progress;
+                marker.setLatLng([lat, lng]);
+
+                if (progress >= 1) {
+                    clearInterval(interval);
+                    alert("Barang: " + barang + " Telah Tiba di Tujuan!");
+                }
+            }, 50);
+        }
+    </script>
+</body>
+</html>
