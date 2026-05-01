@@ -24,14 +24,12 @@
         .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 45vh; }
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
-        .input-group label i { color: #fff; margin-right: 5px; }
         
         input, select { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
         input[type="file"] { font-size: 0.8rem; background: #001224; border: 1px dashed #ff851b; padding: 5px; cursor: pointer; }
         
         button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; }
 
-        /* LIST MISI AKTIF DETAIL */
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
         .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.7); border: 1px solid #113355; }
         
@@ -41,30 +39,28 @@
 
         .card-main-body { display: flex; gap: 15px; align-items: center; }
         .card-main-body img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 3px solid; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-        .info-detail { flex: 1; }
         .info-detail h4 { margin: 0; font-size: 1rem; color: #fff; text-transform: uppercase; }
         .info-detail .serial-txt { font-size: 0.9rem; color: #00ff00; font-family: monospace; font-weight: bold; }
 
-        /* Detail Waktu & Durasi */
         .flight-timer-info { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; font-size: 0.75rem; }
         .timer-item { display: flex; flex-direction: column; }
         .timer-label { color: #8cb4d6; font-weight: bold; margin-bottom: 2px; }
         .timer-value { color: #fff; font-family: monospace; font-weight: bold; }
 
-        .btn-action-group { display: flex; gap: 8px; margin-top: 12px; }
-        .btn-focus-card { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; flex: 1; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-focus-card { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; width: 100%; cursor: pointer; font-size: 0.85rem; margin-top: 10px; }
 
-        /* Marker Pesawat Map */
+        /* Marker Pesawat Map - TANPA BG HITAM & LIST ORANGE */
         .plane-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; }
         .plane-info-overlay { 
-            position: absolute; top: -110px; display: flex; flex-direction: column; align-items: center; 
-            background: rgba(0,0,0,0.9); padding: 10px; border-radius: 12px; border: 3px solid #ff851b;
+            position: absolute; top: -105px; display: flex; flex-direction: column; align-items: center; 
+            background: none; padding: 0; border: none; /* Hilangkan BG dan Border */
             min-width: 170px; text-align: center; pointer-events: none;
         }
-        .plane-info-overlay img.pilot-photo { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #fff; margin-bottom: 5px; object-fit: cover; }
-        .plane-info-overlay .name { font-size: 14px; font-weight: bold; color: #fff; }
-        .plane-info-overlay .serial { font-size: 16px; font-weight: bold; color: #00ff00; font-family: monospace; }
-        .plane-status-tag { position: absolute; bottom: -30px; background: #ff851b; color: #000; font-size: 12px; font-weight: bold; padding: 2px 10px; border-radius: 4px; white-space: nowrap; }
+        .plane-info-overlay img.pilot-photo { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; margin-bottom: 5px; object-fit: cover; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        .plane-info-overlay .name { font-size: 14px; font-weight: bold; color: #fff; text-shadow: 2px 2px 4px #000; }
+        .plane-info-overlay .serial { font-size: 16px; font-weight: bold; color: #00ff00; font-family: monospace; text-shadow: 2px 2px 4px #000; }
+        
+        .plane-status-tag { position: absolute; bottom: -30px; background: #ff851b; color: #000; font-size: 12px; font-weight: bold; padding: 2px 10px; border-radius: 4px; white-space: nowrap; box-shadow: 0 0 5px #000; }
     </style>
 </head>
 <body>
@@ -79,11 +75,11 @@
         </div>
 
         <div class="form-section">
-            <div class="input-group"><label><i class="fa-solid fa-box"></i> Misi / Logistik</label><input type="text" id="inp_barang" placeholder="Contoh: Amunisi"></div>
-            <div class="input-group"><label><i class="fa-solid fa-user-pilot"></i> Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
-            <div class="input-group"><label><i class="fa-solid fa-plane"></i> Jenis & No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules C-130 / A-1301"></div>
-            <div class="input-group"><label><i class="fa-solid fa-image"></i> Insert Foto</label><input type="file" id="inp_foto" accept="image/*"></div>
-            <div class="input-group"><label><i class="fa-solid fa-calendar-check" style="color:#fff"></i> Jadwal Take Off</label><input type="datetime-local" id="inp_waktu"></div>
+            <div class="input-group"><label>Misi / Logistik</label><input type="text" id="inp_barang" placeholder="Contoh: Amunisi"></div>
+            <div class="input-group"><label>Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
+            <div class="input-group"><label>Jenis & No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules C-130 / A-1301"></div>
+            <div class="input-group"><label>Insert Foto</label><input type="file" id="inp_foto" accept="image/*"></div>
+            <div class="input-group"><label>Jadwal Take Off</label><input type="datetime-local" id="inp_waktu"></div>
             
             <label style="color: #ff851b; font-size: 0.8rem; font-weight: bold; margin: 5px 0; display: block;">NAVIGASI RUTE MULTI-TRANSIT</label>
             <div class="input-group"><label>1. Asal</label><select id="inp_asal"></select></div>
@@ -133,8 +129,16 @@
             { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
         ];
 
-        // Kecepatan Hercules C-130 rata-rata (km/jam)
         const SPEED_HERCULES = 540;
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
 
         function isiDropdown() {
             const ids = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
@@ -155,15 +159,6 @@
         let flightCounter = 0;
         const warnaMisi = ['#ff851b', '#00e5ff', '#39ff14', '#ff007f'];
 
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; 
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
         async function prosesTambahPenerbangan() {
             const kurir = document.getElementById('inp_kurir').value || "Crew TNI AU";
             const pesawat = document.getElementById('inp_pesawat').value || "Hercules C-130";
@@ -180,7 +175,6 @@
                 if(val){ const d=val.split(','); rute.push({lat:parseFloat(d[0]), lng:parseFloat(d[1]), nama:d[2]}); }
             });
 
-            // Kalkulasi Jarak & Waktu
             let totalDist = 0;
             for(let i=0; i<rute.length-1; i++) {
                 totalDist += calculateDistance(rute[i].lat, rute[i].lng, rute[i+1].lat, rute[i+1].lng);
@@ -235,25 +229,13 @@
                             <div class="info-detail">
                                 <h4>${f.kurir}</h4>
                                 <span class="serial-txt">${f.pesawat}</span>
-                                <span style="font-size:0.8rem; display:block; margin-top:2px;">📦 ${f.barang}</span>
                             </div>
                         </div>
                         <div class="flight-timer-info">
-                            <div class="timer-item">
-                                <span class="timer-label">TAKE OFF</span>
-                                <span class="timer-value">${f.depTime.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB</span>
-                            </div>
-                            <div class="timer-item">
-                                <span class="timer-label">EST. SAMPAI (ETA)</span>
-                                <span class="timer-value">${f.eta.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB</span>
-                            </div>
-                            <div class="timer-item" style="grid-column: span 2; border-top: 1px solid #333; padding-top:5px; margin-top:5px;">
-                                <span class="timer-label">DURASI PERJALANAN: <span style="color:#ffee00">${f.duration}</span></span>
-                            </div>
+                            <div class="timer-item"><span class="timer-label">TAKE OFF</span><span class="timer-value">${f.depTime.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB</span></div>
+                            <div class="timer-item"><span class="timer-label">ETA</span><span class="timer-value">${f.eta.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})} WIB</span></div>
                         </div>
-                        <div class="btn-action-group">
-                            <button class="btn-focus-card" onclick="map.setView(flights.find(x=>x.id===${f.id}).marker.getLatLng(), 8)">🎯 FOCUS TRACK</button>
-                        </div>
+                        <button class="btn-focus-card" onclick="map.setView(flights.find(x=>x.id===${f.id}).marker.getLatLng(), 8)">🎯 FOCUS TRACK</button>
                     </div>`;
             });
         }
@@ -270,13 +252,8 @@
             document.getElementById('date-live').innerHTML = `<i class="fa-solid fa-calendar-day"></i> ` + now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
             flights.forEach(f => { 
                 const tag = document.getElementById(`tag-${f.id}`);
-                if (f.status === "STANDBY" && now >= f.depTime) { 
-                    f.status = "TERBANG"; f.marker.setOpacity(1); 
-                    if(tag) tag.innerText = "AIRBORNE";
-                }
-                if (f.status === "TERBANG" && now >= f.eta) {
-                    if(tag) { tag.innerText = "ARRIVED"; tag.style.background = "#00ff00"; }
-                }
+                if (f.status === "STANDBY" && now >= f.depTime) { f.status = "TERBANG"; f.marker.setOpacity(1); if(tag) tag.innerText = "AIRBORNE"; }
+                if (f.status === "TERBANG" && now >= f.eta) { if(tag) { tag.innerText = "ARRIVED"; tag.style.background = "#00ff00"; } }
             });
         }, 1000);
     </script>
