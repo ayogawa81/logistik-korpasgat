@@ -4,147 +4,252 @@
     <title>Dashboard Logistik KORPASGAT</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; font-family: sans-serif; background: #001f3f; color: white; }
-        #map { height: 70vh; width: 100%; }
-        .control-panel { padding: 20px; background: #002d5a; display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
-        input, select, button { padding: 10px; font-size: 1rem; border-radius: 5px; border: none; }
-        button { background: #ff851b; color: white; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        body { margin: 0; font-family: sans-serif; background: #001f3f; color: white; overflow: hidden; }
+        #map { height: 70vh; width: 100%; position: relative; }
+        
+        .control-panel { 
+            padding: 15px; background: #002d5a; display: flex; gap: 10px; 
+            justify-content: center; align-items: center; flex-wrap: wrap; 
+        }
+        
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 0.8rem; font-weight: bold; color: #b3cde0; }
+        
+        input, select, button { padding: 8px; font-size: 0.95rem; border-radius: 5px; border: none; }
+        button { background: #ff851b; color: white; cursor: pointer; font-weight: bold; transition: 0.3s; padding: 10px 20px; height: 100%; }
         button:hover { background: #e07015; }
-        h2 { text-align: center; margin: 15px 0; letter-spacing: 2px; }
+        h2 { text-align: center; margin: 10px 0; letter-spacing: 2px; text-transform: uppercase; font-size: 1.2rem;}
         
-        /* Hilangkan background default Leaflet untuk marker custom */
+        /* Container untuk pesawat agar background transparan */
         .plane-container { background: transparent; border: none; }
-        
-        /* Efek bayangan untuk memperkuat kesan 3D */
         .plane-svg { filter: drop-shadow(3px 5px 4px rgba(0,0,0,0.6)); }
+
+        /* Desain elemen yang menempel di pesawat */
+        .flying-info-box {
+            position: absolute;
+            bottom: 35px; /* Mengambang di atas pesawat */
+            left: -35px;
+            width: 110px;
+            background: rgba(0, 31, 63, 0.85);
+            border: 1px solid #ff851b;
+            border-radius: 5px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            pointer-events: none; /* Agar tidak mengganggu klik peta */
+        }
+        .flying-info-box img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+            margin-bottom: 3px;
+        }
+        .flying-info-box .time-text {
+            font-size: 0.65rem;
+            color: #fff;
+            font-weight: bold;
+        }
+        .flying-info-box .courier-name {
+            font-size: 0.6rem;
+            color: #ff851b;
+        }
     </style>
 </head>
 <body>
 
-    <h2>MONITORING PENGIRIMAN LOGISTIK 3D</h2>
+    <h2>MONITORING LOGISTIK MULTI-RUTE</h2>
+    
     <div id="map"></div>
 
     <div class="control-panel">
-        <input type="text" id="barang" placeholder="Nama Barang (opsional)">
-        
-        <select id="asal">
-            <option value="" disabled selected>Pilih Asal Keberangkatan</option>
-            <option value="-6.12,106.65">Jakarta (CGK)</option>
-            <option value="-7.37,112.78">Surabaya (SUB)</option>
-            <option value="-1.26,116.89">Balikpapan (BPN)</option>
-            <option value="-5.06,119.55">Makassar (UPG)</option>
-            <option value="-2.57,140.51">Jayapura (DJJ)</option>
-        </select>
+        <div class="input-group">
+            <label>Waktu Keberangkatan</label>
+            <input type="datetime-local" id="waktu_berangkat">
+        </div>
 
-        <span style="font-weight: bold;">➔</span>
+        <div class="input-group">
+            <label>Titik Asal</label>
+            <select id="asal">
+                <option value="-6.12,106.65">Jakarta (CGK)</option>
+                <option value="-7.37,112.78">Surabaya (SUB)</option>
+                <option value="-1.26,116.89">Balikpapan (BPN)</option>
+                <option value="-5.06,119.55">Makassar (UPG)</option>
+                <option value="-2.57,140.51">Jayapura (DJJ)</option>
+            </select>
+        </div>
 
-        <select id="tujuan">
-            <option value="" disabled selected>Pilih Tujuan Pendaratan</option>
-            <option value="-6.12,106.65">Jakarta (CGK)</option>
-            <option value="-7.37,112.78">Surabaya (SUB)</option>
-            <option value="-1.26,116.89">Balikpapan (BPN)</option>
-            <option value="-5.06,119.55">Makassar (UPG)</option>
-            <option value="-2.57,140.51">Jayapura (DJJ)</option>
-        </select>
+        <span style="font-weight: bold; margin-top: 20px;">➔</span>
 
-        <button onclick="kirimBarang()">✈️ Terbangkan Pesawat</button>
+        <div class="input-group">
+            <label>Tujuan 1</label>
+            <select id="tujuan1">
+                <option value="" selected>-- Pilih Tujuan --</option>
+                <option value="-6.12,106.65">Jakarta (CGK)</option>
+                <option value="-7.37,112.78">Surabaya (SUB)</option>
+                <option value="-1.26,116.89">Balikpapan (BPN)</option>
+                <option value="-5.06,119.55">Makassar (UPG)</option>
+                <option value="-2.57,140.51">Jayapura (DJJ)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Tujuan 2 (Opsional)</label>
+            <select id="tujuan2">
+                <option value="" selected>-- Lewati --</option>
+                <option value="-6.12,106.65">Jakarta (CGK)</option>
+                <option value="-7.37,112.78">Surabaya (SUB)</option>
+                <option value="-1.26,116.89">Balikpapan (BPN)</option>
+                <option value="-5.06,119.55">Makassar (UPG)</option>
+                <option value="-2.57,140.51">Jayapura (DJJ)</option>
+            </select>
+        </div>
+
+        <div class="input-group" style="margin-top: 20px;">
+            <button onclick="kirimBarang()">✈️ Terbangkan</button>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 1. Inisialisasi Peta
-        const map = L.map('map').setView([-2.5, 118], 5);
+        // 1. Inisialisasi Peta & Fokus HANYA di wilayah Indonesia
+        const bounds = L.latLngBounds([-13.0, 93.0], [8.0, 142.0]);
+        const map = L.map('map', {
+            center: [-2.5, 118],
+            zoom: 5,
+            minZoom: 4,
+            maxBounds: bounds,
+            maxBoundsViscosity: 1.0
+        });
 
-        // 2. Gunakan Layer Satelit Esri (Mirip Google Earth)
+        // 2. Layer Satelit (Citra Bumi)
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP'
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map);
+
+        // 3. Layer Teks Referensi (Nama Kota, Provinsi, Negara)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Labels &copy; Esri'
         }).addTo(map);
 
         let currentMarker = null;
         let currentLine = null;
+        let animationInterval = null;
+
+        // Format Tanggal
+        function formatTanggal(datetimeLocal) {
+            if (!datetimeLocal) return "Waktu Tidak Diatur";
+            const date = new Date(datetimeLocal);
+            const opsi = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return date.toLocaleDateString('id-ID', opsi).replace(',', ' -');
+        }
 
         function kirimBarang() {
-            const barang = document.getElementById('barang').value || "Logistik";
-            const asalSelect = document.getElementById('asal').value;
-            const tujuanSelect = document.getElementById('tujuan').value;
+            // Hentikan animasi sebelumnya jika masih berjalan
+            if(animationInterval) clearInterval(animationInterval);
 
-            if (!asalSelect || !tujuanSelect) {
-                alert("Harap pilih Asal dan Tujuan terlebih dahulu!");
-                return;
+            const waktuInput = document.getElementById('waktu_berangkat').value;
+            const waktuTeks = formatTanggal(waktuInput);
+            
+            // Kumpulkan rute (Asal -> Tujuan 1 -> Tujuan 2)
+            const rute = [];
+            const asalVal = document.getElementById('asal').value;
+            if (asalVal) rute.push(asalVal.split(',').map(Number));
+
+            const tujuan1Val = document.getElementById('tujuan1').value;
+            if (tujuan1Val) rute.push(tujuan1Val.split(',').map(Number));
+
+            const tujuan2Val = document.getElementById('tujuan2').value;
+            if (tujuan2Val) rute.push(tujuan2Val.split(',').map(Number));
+
+            if (rute.length < 2) {
+                alert("Pilih minimal Titik Asal dan Tujuan 1!"); return;
             }
-            if (asalSelect === tujuanSelect) {
-                alert("Titik asal dan tujuan tidak boleh sama!");
-                return;
-            }
 
-            const asalCoord = asalSelect.split(',').map(Number);
-            const tujuanCoord = tujuanSelect.split(',').map(Number);
-
-            // Bersihkan marker/garis sebelumnya jika ada
+            // Hapus marker/garis lama
             if (currentMarker) map.removeLayer(currentMarker);
             if (currentLine) map.removeLayer(currentLine);
 
-            // Hitung rotasi sudut agar pesawat menghadap ke tujuan
-            const dy = tujuanCoord[0] - asalCoord[0];
-            const dx = tujuanCoord[1] - asalCoord[1];
-            const angle = Math.atan2(dx, dy) * 180 / Math.PI;
+            // Gambar Garis Rute (Multi-point)
+            currentLine = L.polyline(rute, { color: '#ff851b', weight: 2, dashArray: '5, 10' }).addTo(map);
 
-            // Gambar Garis Jalur
-            currentLine = L.polyline([asalCoord, tujuanCoord], {
-                color: '#ff851b', 
-                weight: 2,
-                dashArray: '5, 10'
-            }).addTo(map);
-
-            // Buat Marker Pesawat dengan SVG (kualitas HD)
-            const planeSVG = `
-                <div id="plane-graphic" style="transform: rotate(${angle}deg) scale(1); transition: transform 0.05s linear;">
-                    <svg class="plane-svg" viewBox="0 0 24 24" width="40" height="40" fill="white" stroke="#ff851b" stroke-width="1.5">
-                        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
-                    </svg>
+            // Desain Marker: Teks Info & Foto menempel di luar grafis pesawat
+            // Jadi hanya pesawat yang berputar, foto tetap tegak lurus
+            const fotoUrl = "https://img.freepik.com/free-photo/portrait-young-delivery-man-red-uniform-with-box_114579-16625.jpg";
+            
+            const markerHTML = `
+                <div style="position: relative; width: 40px; height: 40px;">
+                    <!-- Kotak Info (Foto & Waktu) -->
+                    <div class="flying-info-box">
+                        <img src="${fotoUrl}" alt="Kurir">
+                        <span class="courier-name">KOPDA BUDI S.</span>
+                        <span class="time-text">${waktuTeks}</span>
+                    </div>
+                    
+                    <!-- Grafis Pesawat (Yang akan diputar dan diskala) -->
+                    <div id="plane-graphic" style="width: 100%; height: 100%; transform: rotate(0deg) scale(1); transition: transform 0.05s linear; transform-origin: center;">
+                        <svg viewBox="0 0 24 24" width="40" height="40" fill="white" stroke="#ff851b" stroke-width="1.5" class="plane-svg">
+                            <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+                        </svg>
+                    </div>
                 </div>
             `;
 
-            const planeIcon = L.divIcon({
-                html: planeSVG,
-                className: 'plane-container',
-                iconSize: [40, 40],
-                iconAnchor: [20, 20] // Titik tengah pesawat
-            });
+            const customIcon = L.divIcon({ html: markerHTML, className: 'plane-container', iconSize: [40, 40], iconAnchor: [20, 20] });
+            currentMarker = L.marker(rute[0], {icon: customIcon}).addTo(map);
 
-            currentMarker = L.marker(asalCoord, {icon: planeIcon}).addTo(map);
-
-            // Animasi Terbang (Ilusi 3D dengan Scale)
+            // LOGIKA ANIMASI MULTI-RUTE
+            let ruteIndex = 0; // Menandakan segmen rute mana yang sedang ditempuh
             let progress = 0;
-            const interval = setInterval(() => {
-                progress += 0.01; // Kecepatan pesawat
+            const speed = 0.003; // Kecepatan lambat
 
-                // Hitung pergerakan koordinat
-                const lat = asalCoord[0] + (tujuanCoord[0] - asalCoord[0]) * progress;
-                const lng = asalCoord[1] + (tujuanCoord[1] - asalCoord[1]) * progress;
+            animationInterval = setInterval(() => {
+                progress += speed;
+                
+                // Jika satu segmen selesai
+                if(progress >= 1) {
+                    ruteIndex++;
+                    progress = 0; // Reset progress untuk segmen rute berikutnya
+                    
+                    // Jika semua rute sudah dilewati, hentikan animasi (tanpa notifikasi)
+                    if(ruteIndex >= rute.length - 1) {
+                        clearInterval(animationInterval);
+                        const graphic = document.getElementById('plane-graphic');
+                        // Kembalikan ukuran ke normal saat mendarat di titik terakhir
+                        if(graphic) graphic.style.transform = `rotate(${graphic.dataset.lastAngle}deg) scale(1)`;
+                        return; 
+                    }
+                }
+
+                // Ambil titik mulai dan tujuan untuk SEGMEN SAAT INI
+                const start = rute[ruteIndex];
+                const end = rute[ruteIndex + 1];
+
+                // Hitung Sudut (Angle) Pesawat
+                const dy = end[0] - start[0];
+                const dx = end[1] - start[1];
+                const angle = Math.atan2(dx, dy) * 180 / Math.PI;
+
+                // Hitung Pergerakan Koordinat
+                const lat = start[0] + (end[0] - start[0]) * progress;
+                const lng = start[1] + (end[1] - start[1]) * progress;
                 currentMarker.setLatLng([lat, lng]);
 
-                // Hitung Ketinggian Terbang (Efek Scale Parabola)
-                // Pesawat akan membesar hingga 2.5x di tengah jalan, lalu mengecil lagi
+                // Hitung Efek Ketinggian (Membesar di tengah, mengecil di ujung tiap segmen)
                 const altitudeScale = 1 + (Math.sin(progress * Math.PI) * 1.5);
                 
-                // Terapkan rotasi dan skala (ketinggian) secara real-time
+                // Terapkan rotasi dan skala HANYA pada pesawat, bukan pada foto penumpangnya
                 const graphic = document.getElementById('plane-graphic');
                 if(graphic) {
                     graphic.style.transform = `rotate(${angle}deg) scale(${altitudeScale})`;
+                    graphic.dataset.lastAngle = angle; // Simpan sudut terakhir
                 }
 
-                // Jika pesawat sudah sampai
-                if (progress >= 1) {
-                    clearInterval(interval);
-                    // Pastikan ukuran kembali normal saat mendarat
-                    if(graphic) graphic.style.transform = `rotate(${angle}deg) scale(1)`; 
-                    
-                    setTimeout(() => {
-                        alert(`Misi Selesai!\n${barang} telah mendarat di tujuan.`);
-                    }, 300);
-                }
-            }, 50); // Frame rate animasi (semakin kecil semakin mulus)
+            }, 50); 
         }
     </script>
 </body>
