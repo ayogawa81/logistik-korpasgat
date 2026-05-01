@@ -23,7 +23,7 @@
         #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
         #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
 
-        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 40vh; }
+        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 38vh; }
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
         
@@ -43,15 +43,16 @@
         .card-main-body { display: flex; gap: 15px; align-items: center; margin-top: 10px; }
         .card-main-body img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 3px solid; }
         
+        /* TOMBOL FOKUS DI CARD */
+        .btn-focus-card { background: #007bff; color: white; border: none; padding: 8px; border-radius: 5px; font-weight: bold; width: 100%; cursor: pointer; font-size: 0.85rem; margin-top: 10px; transition: 0.3s; }
+        .btn-focus-card:hover { background: #0056b3; }
+
         /* PESAWAT DI PETA */
         .plane-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; }
-        .plane-info-overlay { position: absolute; top: -110px; text-align: center; min-width: 180px; pointer-events: none; }
+        .plane-info-overlay { position: absolute; top: -115px; text-align: center; min-width: 180px; pointer-events: none; }
         .pilot-photo-map { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 12px #000; }
-        
-        /* TULISAN MENEMPEL DI PESAWAT (DIPERBESAR) */
         .plane-info-overlay .name-txt { font-weight: bold; color: white; text-shadow: 2px 2px 4px #000; font-size: 1.1rem; }
         .plane-info-overlay .serial-txt { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
-        
         .plane-status-tag { background: #ff851b; color: #000; font-size: 13px; font-weight: bold; padding: 3px 12px; border-radius: 4px; margin-top: 5px; }
     </style>
 </head>
@@ -102,38 +103,21 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Fokus Peta Indonesia
+        const map = L.map('map').setView([-2.2, 118], 5);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+
         const daftarBandara = [
-           // SUMATERA & BARAT
-            { nama: "Sabang (SBG) - Lanud Maimun Saleh", lat: 5.8753, lng: 95.3375 },
-            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
-            { nama: "Medan (MES) - Lanud Soewondo", lat: 3.5623, lng: 98.6837 },
+            { nama: "Jakarta (HLP) - Lanud Halim", lat: -6.2655, lng: 106.8906 },
+            { nama: "Bandung (BDO) - Lanud Husein", lat: -6.9009, lng: 107.5768 },
             { nama: "Pekanbaru (PKU) - Lanud Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
-            { nama: "Ranai (NTX) - Lanud Raden Sadjad (Natuna)", lat: 3.9453, lng: 108.3871 },
-            { nama: "Palembang (PLM) - Lanud Sri Mulyono Herlambang", lat: -2.8981, lng: 104.7001 },
-            // JAWA
-            { nama: "Jakarta (HLP) - Lanud Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
-            { nama: "Bandung (BDO) - Lanud Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
             { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
-            { nama: "Malang (MLG) - Lanud Abdul Rachman Saleh", lat: -7.9264, lng: 112.7135 },
-            // KALIMANTAN
-            { nama: "Pontianak (PNK) - Lanud Supadio", lat: -0.1507, lng: 109.4039 },
-            { nama: "Balikpapan (BPN) - Lanud Dhomber", lat: -1.2683, lng: 116.8944 },
-            { nama: "Tarakan (TRK) - Lanud Anang Busra", lat: 3.3262, lng: 117.5647 },
-            // SULAWESI & TENGAH
+            { nama: "Malang (MLG) - Lanud Abdul Rachman", lat: -7.9264, lng: 112.7135 },
             { nama: "Makassar (UPG) - Lanud Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
-            { nama: "Manado (MDC) - Lanud Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
-            // BALI & NUSA TENGGARA
-            { nama: "Denpasar (DPS) - Ngurah Rai", lat: -8.7481, lng: 115.1671 },
-            { nama: "Kupang (KOE) - Lanud El Tari", lat: -10.1705, lng: 123.6653 },
-            // PAPUA & TIMUR
-            { nama: "Ambon (AMQ) - Lanud Pattimura", lat: -3.7049, lng: 128.0890 },
             { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 },
             { nama: "Jayapura (DJJ) - Lanud Silas Papare", lat: -2.5765, lng: 140.5158 },
-            { nama: "Timika (TIM) - Lanud Yohanis Kapiyau", lat: -4.5296, lng: 136.8870 },
-            { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
+            { nama: "Ranai (NTX) - Lanud Raden Sadjad", lat: 3.9453, lng: 108.3871 }
         ];
-        const map = L.map('map').setView([-2.5, 118], 5);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
         let flights = [];
         const SPEED_HERCULES = 540;
@@ -170,7 +154,7 @@
                         <div class="name-txt">${f.kurir}</div>
                         <div class="serial-txt">${f.pesawat}</div>
                     </div>
-                    <svg viewBox="0 0 100 100" width="75" height="75" style="transform: rotate(${angle}deg);">
+                    <svg viewBox="0 0 100 100" width="80" height="80" style="transform: rotate(${angle}deg);">
                         <g fill="${f.warna}" stroke="#fff" stroke-width="2">
                             <path d="M50 5 L90 90 L50 70 L10 90 Z" />
                         </g>
@@ -205,19 +189,12 @@
             for(let i=0; i<rute.length-1; i++) totalDist += calculateDistance(rute[i].lat, rute[i].lng, rute[i+1].lat, rute[i+1].lng);
             const durationHours = totalDist / SPEED_HERCULES;
             const eta = new Date(depTime.getTime() + (durationHours * 3600000));
-            const lamaPerjalanan = `${Math.floor(durationHours)}j ${Math.round((durationHours % 1) * 60)}m`;
 
             const dataMisi = {
-                kurir,
-                pesawat: document.getElementById('inp_pesawat').value || "Hercules",
+                kurir, pesawat: document.getElementById('inp_pesawat').value || "Hercules",
                 barang: document.getElementById('inp_barang').value || "Logistik",
-                depTimeStr: depTime.toISOString(),
-                etaStr: eta.toISOString(),
-                status: "STANDBY",
-                warna: "#ff851b",
-                fotoUrl,
-                rute,
-                duration: lamaPerjalanan
+                depTimeStr: depTime.toISOString(), etaStr: eta.toISOString(), status: "STANDBY", warna: "#ff851b",
+                fotoUrl, rute, duration: `${Math.floor(durationHours)}j ${Math.round((durationHours % 1) * 60)}m`
             };
 
             if(fbId) {
@@ -246,13 +223,8 @@
             ids.forEach((id, index) => {
                 document.getElementById(id).value = f.rute[index] ? f.rute[index].rawVal : "";
             });
-
             document.getElementById('btn_submit').innerText = "💾 UPDATE MISI CLOUD";
             document.querySelector('.form-section').scrollTop = 0;
-        }
-
-        function hapusMisi(id) {
-            if(confirm("Hapus misi ini dari Cloud?")) db.ref('misi_logistik/' + id).remove();
         }
 
         function renderSidebar() {
@@ -279,11 +251,14 @@
                             <span>ETA: ${f.eta.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                         </div>
                         <div style="font-size: 0.75rem; color: #ffee00; font-weight: bold; text-align: center; margin-top: 5px;">
-                            LAMA PERJALANAN: ${f.duration}
+                            DURASI: ${f.duration}
                         </div>
+                        <button class="btn-focus-card" onclick="map.setView(flights.find(x=>x.fbId==='${f.fbId}').marker.getLatLng(), 8)">🎯 FOCUS PESAWAT</button>
                     </div>`;
             });
         }
+
+        function hapusMisi(id) { if(confirm("Hapus misi ini dari Cloud?")) db.ref('misi_logistik/' + id).remove(); }
 
         function isiDropdown() {
             const ids = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
@@ -298,7 +273,6 @@
             const now = new Date();
             document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
             document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
-            
             flights.forEach(f => {
                 if (f.status === "STANDBY" && now >= f.depTime) db.ref('misi_logistik/' + f.fbId).update({ status: "AIRBORNE" });
                 if (f.status === "AIRBORNE" && now >= f.eta) db.ref('misi_logistik/' + f.fbId).update({ status: "ARRIVED" });
