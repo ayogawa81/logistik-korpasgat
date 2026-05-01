@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Kodal Logistik KORPASGAT - Command Center TV</title>
+    <title>Kodal Logistik KORPASGAT - Armada TNI AU</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
@@ -16,14 +16,12 @@
         .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
         .header h2 { margin: 0; font-size: 1.2rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
         
-        /* Jam & Kalender Header Cerah */
         .live-info { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
         #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
         #clock-live i { color: #fff; margin-right: 10px; }
         #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; }
         #date-live i { color: #fff; margin-right: 10px; }
 
-        /* Form Section */
         .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 52vh; }
         .input-group { margin-bottom: 12px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 5px; color: #8cb4d6; font-weight: bold; }
@@ -34,14 +32,10 @@
         
         button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; }
 
-        /* Flight Cards */
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
-        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 8px; padding: 12px; margin-bottom: 15px; box-shadow: 0 6px 12px rgba(0,0,0,0.6); position: relative; }
+        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 8px; padding: 12px; margin-bottom: 15px; box-shadow: 0 6px 12px rgba(0,0,0,0.6); }
         .card-body { display: flex; gap: 10px; align-items: center; }
         .card-body img { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid; }
-
-        .btn-lanjut { background: #17a2b8; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 8px; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
         .plane-id-label { background: rgba(0,0,0,0.8); color: #00ff00; font-size: 11px; font-weight: bold; padding: 2px 5px; border-radius: 4px; border: 1px solid #ff851b; white-space: nowrap; }
     </style>
@@ -92,29 +86,30 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Database Bandara Lengkap Indonesia
         const daftarBandara = [
-            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
-            { nama: "Medan (KNO) - Kualanamu", lat: 3.6353, lng: 98.8807 },
-            { nama: "Pekanbaru (PKU) - Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
-            { nama: "Palembang (PLM) - SMB II", lat: -2.8981, lng: 104.7001 },
-            { nama: "Jakarta (HLP) - Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
-            { nama: "Jakarta (CGK) - Soekarno Hatta", lat: -6.1256, lng: 106.6558 },
-            { nama: "Bandung (BDO) - Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
-            { nama: "Surabaya (SUB) - Juanda", lat: -7.3798, lng: 112.7874 },
-            { nama: "Yogyakarta (YIA) - Kulon Progo", lat: -7.9008, lng: 110.0519 },
-            { nama: "Denpasar (DPS) - Ngurah Rai", lat: -8.7481, lng: 115.1671 },
-            { nama: "Lombok (LOP) - Zainuddin AM", lat: -8.7582, lng: 116.2753 },
-            { nama: "Balikpapan (BPN) - Sepinggan", lat: -1.2683, lng: 116.8944 },
-            { nama: "Makassar (UPG) - Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
-            { nama: "Manado (MDC) - Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
-            { nama: "Kupang (KOE) - El Tari", lat: -10.1705, lng: 123.6653 },
-            { nama: "Ambon (AMQ) - Pattimura", lat: -3.7049, lng: 128.0890 },
-            { nama: "Sorong (SOQ) - Domine EO", lat: -0.8845, lng: 131.2870 },
-            { nama: "Biak (BIK) - Manuhua", lat: -1.1911, lng: 136.1086 },
-            { nama: "Timika (TIM) - Yohanis Kapiyau", lat: -4.5296, lng: 136.8870 },
-            { nama: "Jayapura (DJJ) - Silas Papare", lat: -2.5765, lng: 140.5158 },
-            { nama: "Merauke (MKQ) - Mopah", lat: -8.5208, lng: 140.4184 }
+            { nama: "Banda Aceh (BTJ) - Lanud Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
+            { nama: "Medan (MES) - Lanud Soewondo", lat: 3.5623, lng: 98.6837 },
+            { nama: "Pekanbaru (PKU) - Lanud Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
+            { nama: "Palembang (PLM) - Lanud Sri Mulyono Herlambang", lat: -2.8981, lng: 104.7001 },
+            { nama: "Jakarta (HLP) - Lanud Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
+            { nama: "Bandung (BDO) - Lanud Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
+            { nama: "Subang (SUA) - Lanud Suryadarma", lat: -6.5333, lng: 107.6500 },
+            { nama: "Yogyakarta (JOG) - Lanud Adisutjipto", lat: -7.7844, lng: 110.4316 },
+            { nama: "Solo (SOC) - Lanud Adi Soemarmo", lat: -7.5165, lng: 110.7554 },
+            { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
+            { nama: "Malang (MLG) - Lanud Abdul Rachman Saleh", lat: -7.9264, lng: 112.7135 },
+            { nama: "Surabaya (SUB) - Juanda (Wing Udara 2)", lat: -7.3798, lng: 112.7874 },
+            { nama: "Pontianak (PNK) - Lanud Supadio", lat: -0.1507, lng: 109.4039 },
+            { nama: "Banjarmasin (BDJ) - Lanud Syamsudin Noor", lat: -3.4402, lng: 114.7617 },
+            { nama: "Balikpapan (BPN) - Lanud Dhomber", lat: -1.2683, lng: 116.8944 },
+            { nama: "Tarakan (TRK) - Lanud Anang Busra", lat: 3.3262, lng: 117.5647 },
+            { nama: "Makassar (UPG) - Lanud Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
+            { nama: "Manado (MDC) - Lanud Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
+            { nama: "Kupang (KOE) - Lanud El Tari", lat: -10.1705, lng: 123.6653 },
+            { nama: "Ambon (AMQ) - Lanud Pattimura", lat: -3.7049, lng: 128.0890 },
+            { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 },
+            { nama: "Jayapura (DJJ) - Lanud Silas Papare", lat: -2.5765, lng: 140.5158 },
+            { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
         ];
 
         function isiDropdown() {
@@ -134,7 +129,6 @@
 
         let flights = [];
         let flightCounter = 0;
-        const SPEED_KMH = 650;
         const warnaMisi = ['#ff851b', '#00e5ff', '#39ff14', '#ff007f'];
 
         function setRealTime() {
@@ -179,9 +173,11 @@
                 f.currentLeg++; 
                 f.legDepTime = new Date(); 
                 f.status = "TERBANG"; 
-                const label = document.getElementById(`label-${f.id}`);
-                if (f.currentLeg === f.rute.length - 2) {
+                const label = document.querySelector(`#label-${f.id}`);
+                if (f.currentLeg === f.rute.length - 1) {
                     label.innerText = `${f.tailNo} - BALIK BASE`;
+                } else if (f.currentLeg === f.rute.length - 2) {
+                    label.innerText = `${f.tailNo} - TUJUAN`;
                 } else {
                     label.innerText = `${f.tailNo} - TRANSIT ${f.currentLeg}`;
                 }
@@ -218,7 +214,9 @@
             const now = new Date();
             document.getElementById('clock-live').innerHTML = `<i class="fa-solid fa-clock"></i> ` + now.toLocaleTimeString('id-ID') + " WIB";
             document.getElementById('date-live').innerHTML = `<i class="fa-solid fa-calendar-day"></i> ` + now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
-            flights.forEach(f => { if (f.status === "AWAL" && now >= f.legDepTime) { f.status = "TERBANG"; f.marker.setOpacity(1); } });
+            flights.forEach(f => { 
+                if (f.status === "AWAL" && now >= f.legDepTime) { f.status = "TERBANG"; f.marker.setOpacity(1); }
+            });
         }, 1000);
     </script>
 </body>
