@@ -57,6 +57,11 @@
         .plane-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; transition: all 1s linear; }
         .pilot-photo-map { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 10px #000; }
         .serial-txt-map { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
+
+        /* Styling baru untuk label Transit di peta */
+        .map-route-label { text-align: center; min-width: 80px; }
+        .step-badge { background: #ff851b; color: #000; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 3px; text-transform: uppercase; display: block; margin-bottom: 2px; box-shadow: 0 0 4px #000; }
+        .airport-txt { color: #ffee00; font-weight: bold; text-shadow: 2px 2px 4px #000; font-size: 13px; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -170,17 +175,30 @@
                 icon: L.divIcon({ html: markerHTML, className: 'p-marker', iconSize: [100, 100], iconAnchor: [50, 50] }), opacity: 0
             }).addTo(map);
 
-            // GARIS RUTE DIPERBESAR SESUAI image_69e2fd.jpg
             f.line = L.polyline(f.rute.map(r=>[r.lat, r.lng]), {
                 color: f.warna, 
-                weight: 4,           // Lebih tebal
-                dashArray: '15, 20',  // Putus-putus lebih besar
+                weight: 4, 
+                dashArray: '15, 20', 
                 opacity: 0.8
             }).addTo(map);
 
-            f.labels = f.rute.map((r, i) => L.marker([r.lat, r.lng], {
-                icon: L.divIcon({ html: `<span style="color:#ffee00; font-weight:bold; text-shadow:2px 2px 4px #000; font-size:14px;">${r.nama.split('-')[0]}</span>`, className: 'airport-label' })
-            }).addTo(map));
+            // Menambahkan label Transit 1, 2, Akhir secara dinamis
+            f.labels = f.rute.map((r, i) => {
+                let tagLabel = "";
+                if (i === 0) tagLabel = "ASAL";
+                else if (i === f.rute.length - 1) tagLabel = "AKHIR";
+                else tagLabel = "TRANSIT " + i;
+
+                const labelHtml = `
+                    <div class="map-route-label">
+                        <span class="step-badge">${tagLabel}</span>
+                        <span class="airport-txt">${r.nama.split('-')[0]}</span>
+                    </div>`;
+
+                return L.marker([r.lat, r.lng], {
+                    icon: L.divIcon({ html: labelHtml, className: 'airport-label', iconAnchor: [40, 0] })
+                }).addTo(map);
+            });
         }
 
         async function prosesTambahPenerbangan() {
@@ -203,7 +221,6 @@
                 if (val) { const d = val.split(','); rute.push({ lat: parseFloat(d[0]), lng: parseFloat(d[1]), nama: d[2], rawVal: val }); }
             });
 
-            // LOGIKA STATE-PRESERVING (DATA LAMA TIDAK HILANG SAAT EDIT)
             let oldData = fbId ? flights.find(x => x.fbId === fbId) : null;
 
             const payload = {
