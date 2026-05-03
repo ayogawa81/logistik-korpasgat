@@ -59,11 +59,12 @@
         .pilot-photo-map { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 10px #000; }
         .serial-txt-map { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
 
-        .map-route-label { text-align: center; min-width: 80px; }
+        /* MODIFIKASI TANDA BULAT KOTA */
+        .map-route-label { text-align: center; min-width: 100px; }
+        .airport-dot { width: 12px; height: 12px; background-color: #ff851b; border: 2px solid #fff; border-radius: 50%; margin: 0 auto 5px auto; box-shadow: 0 0 10px #ff851b; }
         .step-badge { background: #ff851b; color: #000; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 3px; text-transform: uppercase; display: block; margin-bottom: 2px; box-shadow: 0 0 4px #000; }
         .airport-txt { color: #ffee00; font-weight: bold; text-shadow: 2px 2px 4px #000; font-size: 13px; white-space: nowrap; }
 
-        /* MODIFIKASI UNTUK TAMPILAN HP */
         @media (max-width: 768px) {
             body { flex-direction: column; overflow: auto; }
             #sidebar { width: 100%; height: auto; border-right: none; border-bottom: 3px solid #ff851b; order: 2; }
@@ -192,6 +193,7 @@
                 opacity: 0.8
             }).addTo(map);
 
+            // RENDER TITIK BULAT DAN LABEL KOTA
             f.labels = f.rute.map((r, i) => {
                 let tagLabel = "";
                 if (i === 0) tagLabel = "ASAL";
@@ -200,12 +202,13 @@
 
                 const labelHtml = `
                     <div class="map-route-label">
+                        <div class="airport-dot"></div>
                         <span class="step-badge">${tagLabel}</span>
                         <span class="airport-txt">${r.nama.split('-')[0]}</span>
                     </div>`;
 
                 return L.marker([r.lat, r.lng], {
-                    icon: L.divIcon({ html: labelHtml, className: 'airport-label', iconAnchor: [40, 0] })
+                    icon: L.divIcon({ html: labelHtml, className: 'airport-label', iconAnchor: [50, 6] })
                 }).addTo(map);
             });
         }
