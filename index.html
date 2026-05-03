@@ -2,6 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kodal Logistik KORPASGAT - Ultimate Cloud Tracking</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -14,7 +15,7 @@
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #000; color: white; display: flex; height: 100vh; overflow: hidden; }
         
-        #sidebar { width: 460px; background: #001f3f; display: flex; flex-direction: column; border-right: 3px solid #ff851b; z-index: 1000; }
+        #sidebar { width: 460px; background: #001f3f; display: flex; flex-direction: column; border-right: 3px solid #ff851b; z-index: 1000; transition: 0.3s; }
         #map-container { flex: 1; position: relative; background: #000; }
         #map { height: 100%; width: 100%; background: #011425; }
 
@@ -58,10 +59,19 @@
         .pilot-photo-map { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 10px #000; }
         .serial-txt-map { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
 
-        /* Styling baru untuk label Transit di peta */
         .map-route-label { text-align: center; min-width: 80px; }
         .step-badge { background: #ff851b; color: #000; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 3px; text-transform: uppercase; display: block; margin-bottom: 2px; box-shadow: 0 0 4px #000; }
         .airport-txt { color: #ffee00; font-weight: bold; text-shadow: 2px 2px 4px #000; font-size: 13px; white-space: nowrap; }
+
+        /* MODIFIKASI UNTUK TAMPILAN HP */
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: auto; }
+            #sidebar { width: 100%; height: auto; border-right: none; border-bottom: 3px solid #ff851b; order: 2; }
+            #map-container { width: 100%; height: 50vh; order: 1; flex: none; }
+            .form-section { max-height: none; }
+            .header h2 { font-size: 1.1rem; }
+            #clock-live { font-size: 1.8rem; }
+        }
     </style>
 </head>
 <body>
@@ -182,7 +192,6 @@
                 opacity: 0.8
             }).addTo(map);
 
-            // Menambahkan label Transit 1, 2, Akhir secara dinamis
             f.labels = f.rute.map((r, i) => {
                 let tagLabel = "";
                 if (i === 0) tagLabel = "ASAL";
