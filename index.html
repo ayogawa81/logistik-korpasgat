@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kodal Logistik KORPASGAT - Manual Take Off</title>
+    <title>Kodal Logistik KORPASGAT - Integrated Radar V2</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -25,40 +25,43 @@
         
         #flight-list { flex: 1; overflow-y: auto; padding: 10px; background: #00142a; }
         .flight-card { background: #002d5a; border-left: 5px solid #00ff00; padding: 10px; margin-bottom: 10px; border-radius: 4px; font-size: 11px; position: relative; }
-        .btn-group { position: absolute; top: 5px; right: 5px; display: flex; gap: 5px; }
+        .btn-group { position: absolute; top: 5px; right: 5px; display: flex; gap: 8px; }
         .btn-icon { background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; }
-
+        
+        .manifest-img { width: 100%; height: 100px; object-fit: cover; margin-top: 5px; border: 1px solid #ff851b; }
         #map { flex: 1; background: #011425; }
-        .plane-label { background: rgba(0,0,0,0.8); color: #00ff00; padding: 2px 5px; border-radius: 3px; font-size: 10px; border: 1px solid #00ff00; }
+        .plane-label { background: rgba(0,0,0,0.8); color: #00ff00; padding: 2px 5px; border-radius: 3px; font-size: 10px; border: 1px solid #00ff00; white-space: nowrap; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <div class="header">
-        <h2 style="margin:0; font-size:0.8rem; color:#ff851b;">SISTEM KODAL LOGISTIK - MANUAL TAKE OFF</h2>
+        <h2 style="margin:0; font-size:0.8rem; color:#ff851b;">SISTEM KODAL LOGISTIK INTEGRATED</h2>
         <div id="clock">00:00:00</div>
     </div>
     
     <div class="form-container">
         <div style="display:flex; gap:5px;">
-            <div class="field" style="flex:2;"><label>CALLSIGN</label><input type="text" id="pesawat" placeholder="A-123"></div>
-            <div class="field" style="flex:1;"><label>POB</label><input type="number" id="pob_qty" value="1"></div>
+            <div class="field" style="flex:2;"><label>CALLSIGN</label><input type="text" id="pesawat" placeholder="A-1234"></div>
+            <div class="field" style="flex:1;"><label>POB (QTY)</label><input type="number" id="pob_qty" value="1"></div>
         </div>
+        <div class="field"><label>NAMA POB / PERSONEL</label><input type="text" id="pob_nama" placeholder="NAMA PERSONEL"></div>
         <div class="field"><label>WAKTU TAKE OFF (MANUAL)</label><input type="datetime-local" id="takeoff_manual"></div>
-        <div class="field"><label>MUATAN / MISI</label><input type="text" id="misi" placeholder="BEKAL ULANG"></div>
+        <div class="field"><label>MUATAN / MISI</label><input type="text" id="misi" placeholder="AMUNISI"></div>
+        <div class="field"><label>FOTO MANIFEST / BARANG</label><input type="file" id="foto" accept="image/*"></div>
         
         <div style="display:flex; gap:5px;">
             <div class="field" style="flex:1;"><label>TYPE</label>
                 <select id="tipe">
                     <option value="450">CN-235 (450 km/h)</option>
                     <option value="540">C-130 (540 km/h)</option>
+                    <option value="800">B-737 (800 km/h)</option>
                 </select>
             </div>
             <div class="field" style="flex:1;"><label>RADAR</label><input type="color" id="warna" value="#00ff00"></div>
         </div>
-        <div class="field">
-            <label>RUTE (ORIGIN - DESTINATION)</label>
+        <div class="field"><label>RUTE (ORIGIN - DESTINATION)</label>
             <div style="display:flex; gap:5px;">
                 <select id="asal" style="flex:1;"></select>
                 <select id="tujuan" style="flex:1;"></select>
@@ -74,9 +77,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    const firebaseConfig = {
-        databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com"
-    };
+    const firebaseConfig = { databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -87,7 +88,8 @@
         { name: "HLP (Jakarta)", lat: -6.265, lng: 106.890 },
         { name: "DMB (B.Papan)", lat: -1.268, lng: 116.894 },
         { name: "HND (Makassar)", lat: -5.061, lng: 119.553 },
-        { name: "SUP (Pontianak)", lat: -0.151, lng: 109.403 }
+        { name: "SUP (Pontianak)", lat: -0.151, lng: 109.403 },
+        { name: "SRI (Manado)", lat: 1.549, lng: 124.926 }
     ];
 
     let activeFlights = {};
@@ -114,10 +116,8 @@
                 const takeoffTs = new Date(v.takeoff_manual).getTime();
                 const duration = v.eet_min * 60000;
                 
-                // Progress calculation
-                let progress = (now - takeoffTs) / duration;
-                if (progress < 0) progress = 0; // Belum berangkat
-                if (progress > 1) progress = 1; // Sudah sampai
+                let progress = Math.min(Math.max((now - takeoffTs) / duration, 0), 1);
+                const status = progress >= 1 ? 'LANDED' : (progress <= 0 ? 'SCHEDULED' : 'EN-ROUTE');
 
                 document.getElementById('flight-list').innerHTML += `
                     <div class="flight-card" style="border-left-color:${v.warna}">
@@ -125,25 +125,34 @@
                             <button class="btn-icon" onclick="prepareEdit('${id}')"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button class="btn-icon" onclick="hapusMisi('${id}')" style="color:red"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                        <div style="color:${v.warna}; font-weight:bold;">${v.pesawat}</div>
-                        <div><b>TAKE OFF:</b> ${v.takeoff_manual.replace('T', ' ')}</div>
-                        <div><b>EST. ARRIVAL:</b> ${v.eta}</div>
-                        <div><b>STATUS:</b> ${progress >= 1 ? 'ARRIVED' : (progress <= 0 ? 'SCHEDULED' : 'EN-ROUTE')}</div>
+                        <b style="color:${v.warna}">${v.pesawat} (POB: ${v.pob_qty})</b><br>
+                        <b>PIC:</b> ${v.pob_nama}<br>
+                        <b>DEP:</b> ${v.takeoff_manual.replace('T', ' ')}<br>
+                        <b>ETA:</b> ${v.eta} | <b>STATUS:</b> ${status}
+                        ${v.foto ? `<img src="${v.foto}" class="manifest-img">` : ''}
                     </div>
                 `;
 
-                const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,10'}).addTo(map);
+                const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,10', opacity: 0.5}).addTo(map);
                 const marker = L.marker([v.lat, v.lng], {
                     icon: L.divIcon({
                         className: 'p-marker',
-                        html: `<div style="text-align:center;"><div class="plane-label">${v.pesawat}</div><i class="fa-solid fa-plane" style="color:${v.warna}; font-size:20px; transform:rotate(${Math.atan2(v.dLat-v.lat, v.dLng-v.lng)*180/Math.PI}deg)"></i></div>`
+                        html: `<div style="text-align:center;"><div class="plane-label">${v.pesawat}</div><i class="fa-solid fa-plane" style="color:${v.warna}; font-size:22px; text-shadow: 1px 1px #000;"></i></div>`
                     })
                 }).addTo(map);
 
                 const interval = setInterval(() => {
-                    const currentProgress = Math.min(Math.max((Date.now() - takeoffTs) / duration, 0), 1);
-                    marker.setLatLng([v.lat + (v.dLat-v.lat)*currentProgress, v.lng + (v.dLng-v.lng)*currentProgress]);
-                    if(currentProgress >= 1) clearInterval(interval);
+                    const curProgress = Math.min(Math.max((Date.now() - takeoffTs) / duration, 0), 1);
+                    const cLat = v.lat + (v.dLat - v.lat) * curProgress;
+                    const cLng = v.lng + (v.dLng - v.lng) * curProgress;
+                    marker.setLatLng([cLat, cLng]);
+
+                    // FIX ARAH PESAWAT: Update heading setiap detik
+                    const angle = Math.atan2(v.dLat - v.lat, v.dLng - v.lng) * 180 / Math.PI;
+                    const iconEl = marker.getElement()?.querySelector('.fa-plane');
+                    if (iconEl) iconEl.style.transform = `rotate(${angle + 90}deg)`;
+
+                    if (curProgress >= 1) clearInterval(interval);
                 }, 1000);
 
                 activeFlights[id] = { marker, line, interval };
@@ -151,27 +160,38 @@
         }
     });
 
-    function prosesMisi() {
-        const tManual = document.getElementById('takeoff_manual').value;
-        if(!tManual) return alert("Pilih Waktu Take Off Terlebih Dahulu!");
+    async function prosesMisi() {
+        const file = document.getElementById('foto').files[0];
+        let base64 = "";
+        if(file) {
+            base64 = await new Promise(r => {
+                const fr = new FileReader();
+                fr.onload = () => r(fr.result);
+                fr.readAsDataURL(file);
+            });
+        }
 
         const a = document.getElementById('asal').value.split('|');
         const t = document.getElementById('tujuan').value.split('|');
+        const takeoffManual = document.getElementById('takeoff_manual').value;
+        if(!a[0] || !t[0] || !takeoffManual) return alert("Lengkapi Rute dan Waktu Take Off!");
+
         const dist = getDistance(parseFloat(a[0]), parseFloat(a[1]), parseFloat(t[0]), parseFloat(t[1]));
         const eetMin = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
-        
-        const takeoffDate = new Date(tManual);
+        const takeoffDate = new Date(takeoffManual);
         const etaDate = new Date(takeoffDate.getTime() + (eetMin * 60000));
 
         const payload = {
             pesawat: document.getElementById('pesawat').value,
             pob_qty: document.getElementById('pob_qty').value,
+            pob_nama: document.getElementById('pob_nama').value,
             misi: document.getElementById('misi').value,
+            takeoff_manual: takeoffManual,
             warna: document.getElementById('warna').value,
-            takeoff_manual: tManual,
             lat: parseFloat(a[0]), lng: parseFloat(a[1]),
             dLat: parseFloat(t[0]), dLng: parseFloat(t[1]),
             eet_min: eetMin,
+            foto: base64 || (editId ? "" : ""),
             eta: etaDate.toLocaleString('id-ID', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'})
         };
 
@@ -182,19 +202,21 @@
         } else {
             db.ref('missions').push(payload);
         }
+        document.getElementById('foto').value = ""; // Reset file input
     }
 
     function prepareEdit(id) {
         db.ref('missions/'+id).once('value', snap => {
             const v = snap.val();
             document.getElementById('pesawat').value = v.pesawat;
+            document.getElementById('pob_nama').value = v.pob_nama;
             document.getElementById('takeoff_manual').value = v.takeoff_manual;
             editId = id;
             document.getElementById('main-btn').innerText = "💾 UPDATE MISI";
         });
     }
 
-    function hapusMisi(id) { if(confirm("Hapus data?")) db.ref('missions/'+id).remove(); }
+    function hapusMisi(id) { if(confirm("Hapus Misi?")) db.ref('missions/'+id).remove(); }
 
     function init() {
         ['asal', 'tujuan'].forEach(id => {
@@ -202,11 +224,9 @@
             sel.innerHTML = '<option value="">-- PILIH LANUD --</option>';
             pangkalan.forEach(p => sel.innerHTML += `<option value="${p.lat}|${p.lng}">${p.name}</option>`);
         });
-        // Set default time to now
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         document.getElementById('takeoff_manual').value = now.toISOString().slice(0,16);
-        
         setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); }, 1000);
     }
     init();
