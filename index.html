@@ -19,58 +19,72 @@
         #map-container { flex: 1; position: relative; background: #000; overflow: hidden; }
         #map { height: 100%; width: 100%; background: #011425; }
 
-        /* --- MODIFIKASI RUNNING TEXT: MENGGULUNG KE ATAS --- */
+        /* LIVE MONITOR OVERLAY (RUNNING TEXT) */
         #announcement-overlay {
             position: absolute;
-            top: -150px; /* Sembunyi lebih jauh karena box lebih tinggi */
-            left: 10px;
-            right: 10px;
-            height: 120px; /* Box lebih tinggi untuk teks multi-baris */
-            background: rgba(0, 20, 40, 0.85); 
+            top: -70px; /* Sembunyi di atas peta saat awal */
+            left: 0;
+            width: 100%;
+            background: rgba(0, 45, 90, 0.9);
             color: #00ff00;
-            padding: 10px;
+            padding: 15px;
             z-index: 2000;
-            border: 2px solid #ff851b;
-            border-radius: 8px;
-            overflow: hidden; 
+            border-bottom: 2px solid #ff851b;
+            font-size: 1.5rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
             transition: top 0.5s ease-in-out;
             display: flex;
-            justify-content: center;
+            align-items: center;
         }
 
-        .scroll-up-text {
-            display: block;
-            text-align: center;
-            position: relative;
-            animation: scrollUp 10s linear infinite; 
-            white-space: pre-wrap; /* Mendukung enter/baris baru */
-            font-size: 1.4rem;
-            line-height: 1.8;
-            width: 100%;
+        .marquee-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 20s linear infinite;
         }
 
-        @keyframes scrollUp {
-            0% { top: 120px; }
-            100% { top: -200px; } /* Sesuaikan tergantung panjang teks */
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
         }
-        /* -------------------------------------------------- */
 
+        /* TEMA KODAL LOGISTIK */
         .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
         .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
         #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
         #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
 
+        /* NAVIGASI TAB */
         .tab-nav { display: flex; background: #002d5a; border-bottom: 2px solid #ff851b; }
         .tab-nav button { flex: 1; padding: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
         .btn-active { background: #ff851b !important; }
         .btn-inactive { background: #002d5a; opacity: 0.7; }
 
+        /* FORM & LIST (LOGIKA LAMA) */
         .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 38vh; }
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
         input, select, textarea { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
         button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; transition: 0.3s; }
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
+        
+        /* CARD MISI */
+        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 10px; padding: 15px; margin-bottom: 15px; position: relative; border: 1px solid #113355; }
+        .action-btns { position: absolute; top: 10px; right: 10px; display: flex; gap: 12px; }
+        .btn-edit { background: none; border: none; color: #ffc107; cursor: pointer; }
+        .btn-cancel { background: none; border: none; color: #ff4d4d; cursor: pointer; }
+        .card-main-body { display: flex; gap: 15px; align-items: center; margin-top: 10px; }
+        .card-main-body img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 3px solid; }
+        .nav-time-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; background: rgba(0,0,0,0.5); margin-top: 10px; border-radius: 5px; padding: 8px; }
+        .time-val { font-family: monospace; font-size: 0.9rem; color: #00ff00; font-weight: bold; }
+        .transit-alert { background: #ff851b; color: black; padding: 8px; text-align: center; font-weight: bold; margin-top: 10px; border-radius: 4px; animation: blink 1.5s infinite; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.6;} 100% {opacity: 1;} }
+
+        /* MAP MARKER */
+        .pilot-photo-map { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 10px #000; }
+        .serial-txt-map { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
     </style>
 </head>
 <body>
@@ -87,22 +101,29 @@
             <button onclick="bukaSlide(2)" id="btn-s2" class="btn-inactive"><i class="fa-solid fa-bullhorn"></i> PENGUMUMAN</button>
         </div>
 
+        <!-- SLIDE 1: TRACKING (DATA LAMA TETAP ADA) -->
         <div id="slide-1" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <div class="form-section">
+                <input type="hidden" id="edit_fbId" value="">
                 <div class="input-group"><label>Misi / Logistik</label><input type="text" id="inp_barang" placeholder="Amunisi"></div>
                 <div class="input-group"><label>Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
                 <div class="input-group"><label>Jenis & No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules / A-1301"></div>
+                <div class="input-group"><label>Insert Foto</label><input type="file" id="inp_foto" accept="image/*"></div>
                 <div class="input-group"><label>Jadwal Take Off Awal (WIB)</label><input type="datetime-local" id="inp_waktu"></div>
                 <div class="input-group"><label>1. Asal</label><select id="inp_asal"></select></div>
+                <div class="input-group"><label>2. Transit 1</label><select id="inp_transit1"></select></div>
+                <div class="input-group"><label>3. Transit 2</label><select id="inp_transit2"></select></div>
                 <div class="input-group"><label>4. Tujuan Akhir</label><select id="inp_tujuan"></select></div>
-                <button class="btn-tambah" onclick="alert('Fungsi Tambah Aktif')">🚀 AKTIVASI MISI CLOUD</button>
+                <div class="input-group"><label>5. Kembali ke Base</label><select id="inp_kembali"></select></div>
+                <button class="btn-tambah" id="btn_submit" onclick="prosesTambahPenerbangan()">🚀 AKTIVASI MISI CLOUD</button>
             </div>
             <div class="list-section" id="flight-list"></div>
         </div>
 
+        <!-- SLIDE 2: PENGUMUMAN (FITUR BARU) -->
         <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 20px; overflow-y: auto;">
             <div style="background: #002244; padding: 15px; border-radius: 8px; border: 1px solid #ff851b; margin-bottom: 20px;">
-                <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI (Gunakan Enter untuk Baris Baru)</label>
+                <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI</label>
                 <textarea id="inp_pengumuman" style="width: 100%; height: 120px; font-family: sans-serif; resize: none;" placeholder="Tulis instruksi komando..."></textarea>
                 <button class="btn-tambah" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> KIRIM PENGUMUMAN</button>
             </div>
@@ -114,16 +135,16 @@
     </div>
 
     <div id="map-container">
+        <!-- OVERLAY RUNNING TEXT (FITUR BARU) -->
         <div id="announcement-overlay">
-            <!-- Teks akan menggulung ke atas di sini -->
-            <div id="running-text-content" class="scroll-up-text">Menunggu instruksi komando...</div>
+            <span id="running-text-content" class="marquee-text">Menunggu pengumuman terbaru dari Komando...</span>
         </div>
         <div id="map"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // FIREBASE CONFIG
+        // FIREBASE CONFIG (SESUAIKAN DENGAN MILIK ANDA)
         const firebaseConfig = {
             apiKey: "AIzaSyBifnBivkGMG827wJGXhIDtjZ5EHNNtLp8",
             authDomain: "kodal-logistik-korpasgat.firebaseapp.com",
@@ -137,7 +158,19 @@
         const map = L.map('map').setView([-2.2, 118], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        // NAVIGASI & OVERLAY CONTROL
+        let flights = [];
+        const SPEED_HERCULES = 540;
+
+        // DATA BANDARA (LAMA)
+        const daftarBandara = [
+            { nama: "Jakarta (HLP) - Lanud Halim", lat: -6.2655, lng: 106.8906 },
+            { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
+            { nama: "Makassar (UPG) - Lanud Hasanuddin", lat: -5.0616, lng: 119.5539 },
+            { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 }
+            // ... Tambahkan daftar lainnya jika perlu
+        ];
+
+        // LOGIKA SLIDE & MONITOR (BARU)
         function bukaSlide(n) {
             const overlay = document.getElementById('announcement-overlay');
             if(n === 1) {
@@ -145,55 +178,63 @@
                 document.getElementById('slide-2').style.display = "none";
                 document.getElementById('btn-s1').className = "btn-active";
                 document.getElementById('btn-s2').className = "btn-inactive";
-                overlay.style.top = "-150px"; 
+                overlay.style.top = "-70px"; // Slide UP (Sembunyi)
             } else {
                 document.getElementById('slide-1').style.display = "none";
                 document.getElementById('slide-2').style.display = "flex";
                 document.getElementById('btn-s1').className = "btn-inactive";
                 document.getElementById('btn-s2').className = "btn-active";
-                overlay.style.top = "20px"; // Muncul di atas peta
+                overlay.style.top = "0"; // Slide DOWN (Muncul di peta)
             }
         }
 
-        // UPDATE KE FIREBASE
         function updatePengumuman() {
             const teks = document.getElementById('inp_pengumuman').value;
-            if(!teks) return alert("Isi teks instruksi!");
+            if(!teks) return alert("Isi teks!");
             db.ref('pengumuman_live').set({ isi: teks, waktu: new Date().toISOString() });
             document.getElementById('inp_pengumuman').value = "";
         }
 
-        // LISTEN DARI FIREBASE
         db.ref('pengumuman_live').on('value', (snap) => {
             const data = snap.val();
-            const pesan = data ? data.isi : "SIAGA LOGISTIK KORPASGAT\n---\nMONITORING AKTIF";
-            
-            // Sidebar display (tetap normal)
+            const pesan = data ? data.isi : "Siaga Logistik KORPASGAT.";
             document.getElementById('display_pengumuman').innerText = pesan;
-            
-            // Overlay display (menggulung ke atas)
             const runText = document.getElementById('running-text-content');
-            runText.innerText = pesan; 
-            
-            // Restart animasi agar mulus saat ada perubahan teks
-            runText.style.animation = 'none';
-            runText.offsetHeight; 
-            runText.style.animation = null;
+            runText.innerText = pesan.replace(/\n/g, " | "); // Animasi restart otomatis
+            runText.classList.remove('marquee-text');
+            void runText.offsetWidth; 
+            runText.classList.add('marquee-text');
         });
 
-        // JAM LIVE
+        // LOGIKA TRACKING (LAMA - TETAP DIJAGA)
+        db.ref('misi_logistik').on('value', (snapshot) => {
+            flights.forEach(f => { if(f.marker) map.removeLayer(f.marker); if(f.line) map.removeLayer(f.line); });
+            flights = [];
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(id => {
+                    const f = data[id]; f.fbId = id; 
+                    initFlightMarker(f); flights.push(f);
+                });
+            }
+            renderSidebar();
+        });
+
+        // ... Sisa fungsi lama (initFlightMarker, prosesTambahPenerbangan, triggerTakeOff, renderSidebar, setInterval jam) ...
+        // Pastikan fungsi renderSidebar dan loop waktu tetap ada di bawah sini sesuai kode Anda sebelumnya.
+        
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
             document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
         }, 1000);
 
-        // DROPDOWN DATA (Sample)
         function isiDropdown() {
-            const ids = ['inp_asal', 'inp_tujuan'];
+            const ids = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
             ids.forEach(id => {
                 const sel = document.getElementById(id);
-                sel.innerHTML = '<option value="">-- Pilih Lokasi --</option><option value="-6.2,106.8">Lanud Halim</option><option value="-7.6,111.4">Lanud Iswahjudi</option>';
+                sel.innerHTML = '<option value="">-- Pilih Lokasi --</option>';
+                daftarBandara.forEach(b => { sel.innerHTML += `<option value="${b.lat},${b.lng},${b.nama}">${b.nama}</option>`; });
             });
         }
         isiDropdown();
