@@ -2,161 +2,190 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>KORPASGAT TACTICAL RADAR V4.0 - FINAL FIX</title>
+    <title>KORPASGAT TACTICAL RADAR V5 - REST DAY MODE</title>
+    
+    <!-- Amunisi CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Amunisi Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <style>
-        :root { --accent: #ff851b; --bg: #0d1117; }
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: var(--bg); color: white; overflow: hidden; }
-        #sidebar { width: 380px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 1000; }
-        .header { background: #010409; padding: 15px; text-align: center; border-bottom: 2px solid var(--accent); }
-        #clock { font-size: 1.5rem; color: #00ff00; font-family: monospace; }
-        .form { padding: 15px; border-bottom: 1px solid #30363d; }
-        input, select { width: 100%; padding: 8px; margin: 5px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 4px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px; }
-        #map { flex: 1; background: #000; }
+        :root { --pencet: #ff851b; --bunker-gelap: #0a0e14; --panel-taktis: #161b22; }
+        body { margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bunker-gelap); color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        /* CSS KHUSUS ROTASI */
-        .plane-wrapper { position: relative; }
-        .plane-label { 
-            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); padding: 2px 5px; border-radius: 3px;
-            font-size: 10px; border: 1px solid var(--accent); white-space: nowrap;
+        #markas-kiri { width: 380px; background: var(--panel-taktis); border-right: 1px solid #30363d; z-index: 2000; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.5); }
+        .kop-surat { background: #010409; padding: 15px; text-align: center; border-bottom: 2px solid var(--pencet); }
+        #jam-komsat { font-size: 1.6rem; color: #00ff00; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px; }
+        
+        .kotak-input { padding: 15px; overflow-y: auto; background: #0d1117; border-bottom: 1px solid #30363d; }
+        .isinya { margin-bottom: 12px; }
+        label { display: block; font-size: 10px; color: var(--pencet); text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; background: #161b22; border: 1px solid #30363d; color: #fff; border-radius: 4px; font-size: 13px; box-sizing: border-box; }
+        input:focus { border-color: var(--pencet); outline: none; }
+        
+        .tombol-pencet { width: 100%; padding: 14px; background: var(--pencet); color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; transition: 0.2s; }
+        .tombol-pencet:hover { background: #e67700; filter: brightness(1.1); }
+
+        #daftar-pesawat { flex: 1; overflow-y: auto; padding: 12px; background: #010409; }
+        .kartu-misi { background: #161b22; border-radius: 6px; padding: 12px; margin-bottom: 12px; border-left: 4px solid var(--pencet); position: relative; border: 1px solid #30363d; font-size: 12px; }
+        .pangkat-pesawat { color: var(--pencet); font-weight: bold; font-size: 14px; }
+        .status-misi { background: #238636; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: bold; float: right; }
+
+        /* Map UI */
+        #peta-ops { flex: 1; background: #000; }
+        .wrapper-burung { text-align: center; }
+        .label-pesawat { 
+            background: rgba(0,0,0,0.85); color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 11px; 
+            border: 1px solid var(--pencet); white-space: nowrap; margin-bottom: 5px; font-weight: bold;
+            display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
-        .rotated-plane { display: inline-block; transition: none; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <div class="header">
-        <div style="font-size: 10px; color: var(--accent);">KORPASGAT TACTICAL RADAR</div>
-        <div id="clock">00:00:00</div>
+<div id="markas-kiri">
+    <div class="kop-surat">
+        <div style="font-size: 0.7rem; color: var(--pencet); margin-bottom: 5px;">KORPASGAT TACTICAL RADAR V5 - SWA BHUWANA PAKSA</div>
+        <div id="jam-komsat">00:00:00</div>
     </div>
-    <div class="form">
-        <label style="font-size:10px;">CALLSIGN</label>
-        <input type="text" id="pesawat" value="C-130">
-        <div style="display:flex; gap:5px;">
-            <select id="asal"></select>
-            <select id="tujuan"></select>
+    
+    <div class="kotak-input">
+        <div style="display:flex; gap:8px;">
+            <div class="isinya" style="flex:2;"><label>Panggilan (Callsign)</label><input type="text" id="burung" placeholder="CN-235"></div>
+            <div class="isinya" style="flex:1;"><label>Nyawa (POB)</label><input type="number" id="nyawa" value="1"></div>
         </div>
-        <input type="datetime-local" id="takeoff">
-        <div style="display:flex; gap:5px;">
-            <select id="tipe" style="flex:2;"><option value="500">HERCULES (500 km/h)</option></select>
-            <input type="color" id="warna" value="#ff851b" style="flex:1;">
+        <div class="isinya"><label>Jam Berangkat (LMT)</label><input type="datetime-local" id="jam_terbang"></div>
+        <div class="isinya"><label>Isi Perut (Muatan)</label><input type="text" id="makanan" placeholder="Logistik Tempur"></div>
+        
+        <div style="display:flex; gap:8px;">
+            <div class="isinya" style="flex:1;"><label>Jenis Burung</label>
+                <select id="jenis_burung">
+                    <option value="450">CN-235 (Ngebut)</option>
+                    <option value="540">C-130 (Kelelawar)</option>
+                </select>
+            </div>
+            <div class="isinya" style="flex:1;"><label>Warna Radar</label><input type="color" id="cat_burung" value="#ff851b"></div>
         </div>
-        <button class="btn" onclick="kirimMisi()">🚀 DEPLOY MISSION</button>
+        <div class="isinya">
+            <label>Jalur Operasi (Origin - Destination)</label>
+            <div style="display:flex; gap:5px;">
+                <select id="bunker_start" style="flex:1;"></select>
+                <select id="bunker_finish" style="flex:1;"></select>
+            </div>
+        </div>
+        <button class="tombol-pencet" id="main-btn" onclick="terbangkanPesawat()">🚀 Kirim Misi</button>
     </div>
-    <div id="flight-list" style="flex:1; overflow-y:auto; padding:10px; background:#010409;"></div>
+
+    <div id="daftar-pesawat"></div>
 </div>
-<div id="map"></div>
+
+<div id="peta-ops"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // Konfigurasi Database - Monitor Terpusat
     const firebaseConfig = { databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    const database = firebase.database();
 
-    const map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    // Peta Satelit stabil
+    const peta_ops = L.map('peta-ops', { zoomControl: false }).setView([-2.5, 118], 5);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(peta_ops);
 
-    const lanuds = [
-        { name: "HLP (Jakarta)", lat: -6.265, lng: 106.890 },
-        { name: "HND (Makassar)", lat: -5.061, lng: 119.553 },
-        { name: "DMB (Balikpapan)", lat: -1.268, lng: 116.894 },
-        { name: "MUN (Biak)", lat: -1.191, lng: 136.108 }
+    const daftar_bunker = [
+        { name: "HLP (Jakarta)", lintang: -6.265, bujur: 106.890 },
+        { name: "HND (Makassar)", lintang: -5.061, bujur: 119.553 },
+        { name: "DMB (Balikpapan)", lintang: -1.268, bujur: 116.894 },
+        { name: "MUN (Biak)", lintang: -1.191, bujur: 136.108 }
     ];
 
-    let liveMissions = {};
+    let skuadronMisi = {};
 
-    db.ref('missions').on('value', snap => {
+    function hitungJarak(l1, b1, l2, b2) {
+        const R = 6371;
+        const dLintang = (l2-l1) * Math.PI/180;
+        const dBujur = (b2-b1) * Math.PI/180;
+        const a = Math.sin(dLintang/2)**2 + Math.cos(l1*Math.PI/180)*Math.cos(l2*Math.PI/180)*Math.sin(dBujur/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    database.ref('missions').on('value', snap => {
         const data = snap.val();
-        const listDiv = document.getElementById('flight-list');
-        listDiv.innerHTML = "";
+        const listBurung = document.getElementById('daftar-pesawat');
+        listBurung.innerHTML = "";
         
-        // Clear existing
-        Object.values(liveMissions).forEach(m => { map.removeLayer(m.marker); map.removeLayer(m.line); clearInterval(m.timer); });
-        liveMissions = {};
+        Object.values(skuadronMisi).forEach(s => { peta_ops.removeLayer(s.burung marker); peta_ops.removeLayer(s.jalur); clearInterval(s.timerMisi); });
+        skuadronMisi = {};
 
-        if (data) {
+        if(data) {
             Object.keys(data).forEach(id => {
-                const v = data[id];
-                listDiv.innerHTML += `<div style="padding:8px; margin-bottom:5px; border-left:4px solid ${v.warna}; background:#161b22; font-size:12px;"><b>${v.pesawat}</b><br>ETA: ${v.eta}</div>`;
+                const b = data[id];
+                const jamTakeoffTs = new Date(b.takeoff_manual).getTime();
+                const durasiMisiMs = b.eet_min * 60000;
+                
+                listBurung.innerHTML += `<div class="kartu-misi" style="border-left-color:${b.warna}"><span class="status-misi">TERBANG</span><span class="pangkat-pesawat">${b.pesawat}</span><br><small>${b.misi}</small><br><div style="font-size:10px; color:#8b949e;">ETA: ${b.eta}</div></div>`;
 
-                // Garis Rute
-                const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,5', opacity: 0.5}).addTo(map);
-
-                // LOGIKA BEARING (Kunci Arah)
-                const dy = v.dLat - v.lat;
-                const dx = v.dLng - v.lng;
-                const theta = Math.atan2(dy, dx);
-                let angle = (theta * 180 / Math.PI); 
-                // FontAwesome Plane menghadap 0 derajat (kanan/Timur) secara default di CSS
-                // Tapi kita ingin dia menghadap "Atas" (Utara) sebagai 0 derajat
-                const rotation = 90 - angle; 
-
-                const marker = L.marker([v.lat, v.lng], {
+                const jalur = L.polyline([[b.lat, b.lng], [b.dLat, b.dLng]], {color: b.warna, weight: 1, dashArray: '5,10', opacity: 0.5}).addTo(peta_ops);
+                const mark Burung = L.marker([b.lat, b.lng], {
                     icon: L.divIcon({
-                        className: 'plane-wrapper',
-                        html: `<div style="transform: rotate(${-rotation}deg);" class="rotated-plane">
-                                 <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:24px;"></i>
-                               </div>
-                               <div class="plane-label">${v.pesawat}</div>`,
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
+                        className: 'wrapper-burung',
+                        html: `<div><div class="label-pesawat">${b.pesawat}</div><br><i class="fa-solid fa-plane" style="color:${b.warna}; font-size:22px;"></i></div>`
                     })
-                }).addTo(map);
+                }).addTo(peta_ops);
 
-                const takeoffTime = new Date(v.takeoff_manual).getTime();
-                const totalDur = v.eet_min * 60000;
+                const timerMisi = setInterval(() => {
+                    const progresiMisi = Math.min(Math.max((Date.now() - jamTakeoffTs) / durasiMisiMs, 0), 1);
+                    mark Burung.setLatLng([b.lat + (b.dLat-b.lat)*progresiMisi, b.lng + (b.dLng-b.lng)*progresiMisi]);
 
-                const timer = setInterval(() => {
-                    let progress = (Date.now() - takeoffTime) / totalDur;
-                    if (progress < 0) progress = 0;
-                    if (progress >= 1) { progress = 1; clearInterval(timer); }
-                    
-                    const nowLat = v.lat + (v.dLat - v.lat) * progress;
-                    const nowLng = v.lng + (v.dLng - v.lng) * progress;
-                    marker.setLatLng([nowLat, nowLng]);
+                    // LOGIKA HEADING: Kunci arah moncong pesawat ke jalur putus-putus
+                    const angleMisi = Math.atan2(b.dLat - b.lat, b.dLng - b.lng) * (180 / Math.PI);
+                    const visual heading = 90 - angleMisi;
+                    const iconEl = mark Burung.getElement()?.querySelector('.fa-plane');
+                    if(iconEl) iconEl.style.transform = `rotate(${-visual heading}deg)`;
+
+                    if(progresiMisi >= 1) clearInterval(timerMisi);
                 }, 1000);
 
-                liveMissions[id] = { marker, line, timer };
+                skuadronMisi[id] = { mark Burung, jalur, timerMisi };
             });
         }
     });
 
-    function kirimMisi() {
-        const asal = document.getElementById('asal').value.split('|');
-        const tujuan = document.getElementById('tujuan').value.split('|');
-        if(!asal[0] || !tujuan[0]) return;
+    function terbangkanPesawat() {
+        const bunker_a = document.getElementById('bunker_start').value.split('|');
+        const bunker_b = document.getElementById('bunker_finish').value.split('|');
+        if(!bunker_a[0] || !bunker_b[0]) return;
 
-        const dLat = parseFloat(tujuan[0]), dLng = parseFloat(tujuan[1]);
-        const sLat = parseFloat(asal[0]), sLng = parseFloat(asal[1]);
-        
-        // Jarak sederhana
-        const dist = Math.sqrt(Math.pow(dLat-sLat, 2) + Math.pow(dLng-sLng, 2)) * 111;
-        const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
+        const jarakTempuh = hitungJarak(parseFloat(bunker_a[0]), parseFloat(bunker_a[1]), parseFloat(bunker_b[0]), parseFloat(bunker_b[1]));
+        const waktuTempuhMin = Math.round((jarakTempuh / parseInt(document.getElementById('jenis_burung').value)) * 60);
+        const etaMisi = new Date(new Date(document.getElementById('jam_terbang').value).getTime() + (waktuTempuhMin * 60000));
 
-        db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value.toUpperCase(),
-            takeoff_manual: document.getElementById('takeoff').value,
-            warna: document.getElementById('warna').value,
-            lat: sLat, lng: sLng, dLat: dLat, dLng: dLng,
-            eet_min: eet,
-            eta: new Date(new Date(document.getElementById('takeoff').value).getTime() + (eet * 60000)).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})
+        database.ref('missions').push({
+            pesawat: document.getElementById('burung').value.toUpperCase() || "A-001",
+            takeoff_manual: document.getElementById('jam_terbang').value,
+            misi: document.getElementById('makanan').value || "LOGISTIK TAKTIS",
+            warna: document.getElementById('cat_burung').value,
+            lat: parseFloat(bunker_a[0]), lng: parseFloat(bunker_a[1]),
+            dLat: parseFloat(bunker_b[0]), dLng: parseFloat(bunker_b[1]),
+            eet_min: waktuTempuhMin,
+            eta: etaMisi.toLocaleString('id-ID', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'})
         });
     }
 
-    // Init
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', {hour12: false}); }, 1000);
-    lanuds.forEach(l => {
-        const opt = `<option value="${l.lat}|${l.lng}">${l.name}</option>`;
-        document.getElementById('asal').innerHTML += opt;
-        document.getElementById('tujuan').innerHTML += opt;
-    });
-    document.getElementById('takeoff').value = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    function inisialisasiMarkas() {
+        ['bunker_start', 'bunker_finish'].forEach(id => {
+            const selectMarkas = document.getElementById(id);
+            selectMarkas.innerHTML = '<option value="">-- PILIH BUNKER --</option>';
+            daftar_bunker.forEach(b => selectMarkas.innerHTML += `<option value="${b.lintang}|${b.bujur}">${b.name}</option>`);
+        });
+        setInterval(() => { document.getElementById('jam-komsat').innerText = new Date().toLocaleTimeString('id-ID', {hour12: false}); }, 1000);
+        const waktu_sekarang = new Date(); waktu_sekarang.setMinutes(waktu_sekarang.getMinutes() - waktu_sekarang.getTimezoneOffset());
+        document.getElementById('jam_terbang').value = waktu_sekarang.toISOString().slice(0,16);
+    }
+    inisialisasiMarkas();
 </script>
 </body>
 </html>
