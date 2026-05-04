@@ -85,12 +85,12 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Konfigurasi Database - Gunakan RTDB Komandan
+    // Konfigurasi Database - Menggunakan RTDB Kodal Logistik
     const firebaseConfig = { databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Peta Satelit High-Res
+    // Inisialisasi Peta - Menggunakan Tile Layer Esri World Imagery yang lebih stabil
     const map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
@@ -98,12 +98,13 @@
         { name: "HLP (Jakarta)", lat: -6.265, lng: 106.890 },
         { name: "HND (Makassar)", lat: -5.061, lng: 119.553 },
         { name: "DMB (Balikpapan)", lat: -1.268, lng: 116.894 },
+        { name: "SRI (Manado)", lat: 1.549, lng: 124.926 },
         { name: "MUN (Biak)", lat: -1.191, lng: 136.108 }
     ];
 
     let activeMissions = {};
 
-    function getDist(l1, n1, l2, n2) {
+    function getDistance(l1, n1, l2, n2) {
         const R = 6371;
         const dLat = (l2-l1) * Math.PI/180;
         const dLon = (n2-n1) * Math.PI/180;
@@ -134,37 +135,32 @@
                                 ${isLanded ? 'LANDED' : 'EN-ROUTE'}
                             </span>
                         </div>
-                        <div style="color:#8b949e;">
+                        <div style="color:#8b949e; line-height:1.6;">
                             <b>MISI:</b> ${v.misi}<br>
+                            <b>DEP:</b> ${v.takeoff_manual.replace('T', ' ')}<br>
                             <b>ETA:</b> ${v.eta}
                         </div>
                     </div>
                 `;
 
                 const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,10', opacity: 0.5}).addTo(map);
+                
+                // Kalkulasi Sudut Rotasi (Bearing) Berdasarkan Rute
+                const dy = v.dLat - v.lat;
+                const dx = v.dLng - v.lng;
+                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+                const heading = 90 - angle;
+
                 const marker = L.marker([v.lat, v.lng], {
                     icon: L.divIcon({
                         className: 'plane-wrapper',
-                        html: `<div><div class="plane-label">${v.pesawat}</div><br><i class="fa-solid fa-plane" style="color:${v.warna}; font-size:22px; text-shadow: 0 0 5px #000;"></i></div>`
+                        html: `<div><div class="plane-label">${v.pesawat}</div><br><i class="fa-solid fa-plane" style="color:${v.warna}; font-size:22px; text-shadow: 0 0 5px #000; transform: rotate(${-heading}deg);"></i></div>`
                     })
                 }).addTo(map);
 
                 const timer = setInterval(() => {
                     const progress = Math.min(Math.max((Date.now() - takeoffTs) / duration, 0), 1);
-                    const curLat = v.lat + (v.dLat - v.lat) * progress;
-                    const curLng = v.lng + (v.dLng - v.lng) * progress;
-                    marker.setLatLng([curLat, curLng]);
-
-                    // LOGIKA HEADING FLIGHT RADAR: Menempel searah garis putus-putus
-                    const dy = v.dLat - v.lat;
-                    const dx = v.dLng - v.lng;
-                    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-                    const heading = 90 - angle;
-
-                    const iconEl = marker.getElement()?.querySelector('.fa-plane');
-                    if (iconEl) {
-                        iconEl.style.transform = `rotate(${-heading}deg)`;
-                    }
+                    marker.setLatLng([v.lat + (v.dLat-v.lat)*progress, v.lng + (v.dLng-v.lng)*progress]);
 
                     if(progress >= 1) clearInterval(timer);
                 }, 1000);
@@ -178,16 +174,16 @@
         const a = document.getElementById('asal').value.split('|');
         const t = document.getElementById('tujuan').value.split('|');
         const toManual = document.getElementById('takeoff_manual').value;
-        if(!a[0] || !t[0] || !toManual) return alert("Pilih Rute!");
+        if(!a[0] || !t[0] || !toManual) return alert("Lengkapi data rute!");
 
-        const dist = getDist(parseFloat(a[0]), parseFloat(a[1]), parseFloat(t[0]), parseFloat(t[1]));
+        const dist = getDistance(parseFloat(a[0]), parseFloat(a[1]), parseFloat(t[0]), parseFloat(t[1]));
         const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
         const etaDate = new Date(new Date(toManual).getTime() + (eet * 60000));
 
         db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value.toUpperCase(),
+            pesawat: document.getElementById('pesawat').value.toUpperCase() || "A-1341",
             pob_qty: document.getElementById('pob_qty').value,
-            misi: document.getElementById('misi').value,
+            misi: document.getElementById('misi').value || "Bekal Ulang Logistik",
             takeoff_manual: toManual,
             warna: document.getElementById('warna').value,
             lat: parseFloat(a[0]), lng: parseFloat(a[1]),
