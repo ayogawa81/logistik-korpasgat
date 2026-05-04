@@ -14,7 +14,6 @@
         :root { --accent: #ff851b; --bg-dark: #0d1117; --panel: #161b22; }
         body { margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        /* Sidebar Professional Look */
         #sidebar { width: 380px; background: var(--panel); border-right: 1px solid #30363d; z-index: 2000; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.5); }
         .header { background: #010409; padding: 15px; text-align: center; border-bottom: 2px solid var(--accent); }
         #clock { font-size: 1.6rem; color: #00ff00; font-family: 'Courier New', monospace; font-weight: bold; letter-spacing: 2px; }
@@ -32,9 +31,8 @@
         .flight-card { background: #161b22; border-radius: 6px; padding: 12px; margin-bottom: 12px; border-left: 4px solid var(--accent); position: relative; border: 1px solid #30363d; font-size: 12px; }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .callsign-text { color: var(--accent); font-weight: bold; font-size: 14px; }
-        .status-pill { background: #238636; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: bold; }
+        .status-pill { color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: bold; }
 
-        /* Map UI */
         #map { flex: 1; background: #000; }
         .plane-wrapper { text-align: center; }
         .plane-label { 
@@ -57,7 +55,7 @@
             <div class="field" style="flex:2;"><label>Callsign</label><input type="text" id="pesawat" placeholder="A-1341"></div>
             <div class="field" style="flex:1;"><label>POB</label><input type="number" id="pob_qty" value="1"></div>
         </div>
-        <div class="field"><label>Waktu Take Off (Manual)</label><input type="datetime-local" id="takeoff_manual"></div>
+        <div class="field"><label>Waktu Take Off (LMT)</label><input type="datetime-local" id="takeoff_manual"></div>
         <div class="field"><label>Misi / Muatan</label><input type="text" id="misi" placeholder="Bekal Ulang Logistik"></div>
         
         <div style="display:flex; gap:8px;">
@@ -91,11 +89,8 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Inisialisasi Peta - Menggunakan Esri World Imagery agar stabil & Detail
     const map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Esri, Maxar, Earthstar Geographics'
-    }).addTo(map);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
     const lanud = [
         { name: "HLP (Jakarta)", lat: -6.265, lng: 106.890 },
@@ -129,12 +124,13 @@
                 const takeoffTs = new Date(v.takeoff_manual).getTime();
                 const duration = v.eet_min * 60000;
                 
+                const isLanded = Date.now() > takeoffTs + duration;
                 list.innerHTML += `
                     <div class="flight-card" style="border-left-color:${v.warna}">
                         <div class="card-header">
                             <span class="callsign-text">${v.pesawat}</span>
-                            <span class="status-pill" style="background:${(Date.now() > takeoffTs + duration) ? '#cf222e' : '#238636'}">
-                                ${(Date.now() > takeoffTs + duration) ? 'LANDED' : 'EN-ROUTE'}
+                            <span class="status-pill" style="background:${isLanded ? '#cf222e' : '#238636'}">
+                                ${isLanded ? 'LANDED' : 'EN-ROUTE'}
                             </span>
                         </div>
                         <div style="color:#8b949e; line-height:1.6;">
@@ -157,10 +153,11 @@
                     const progress = Math.min(Math.max((Date.now() - takeoffTs) / duration, 0), 1);
                     marker.setLatLng([v.lat + (v.dLat-v.lat)*progress, v.lng + (v.dLng-v.lng)*progress]);
 
-                    // Heading/Bearing Calculation
-                    const angle = Math.atan2(v.dLat - v.lat, v.dLng - v.lng) * 180 / Math.PI;
+                    // FIX ARAH PESAWAT: Sudut real-time mengikuti garis rute
+                    const angle = Math.atan2(v.dLat - v.lat, v.dLng - v.lng) * (180 / Math.PI);
+                    const heading = 90 - angle;
                     const icon = marker.getElement()?.querySelector('.fa-plane');
-                    if(icon) icon.style.transform = `rotate(${angle + 90}deg)`;
+                    if(icon) icon.style.transform = `rotate(${-heading}deg)`;
 
                     if(progress >= 1) clearInterval(timer);
                 }, 1000);
@@ -174,16 +171,16 @@
         const a = document.getElementById('asal').value.split('|');
         const t = document.getElementById('tujuan').value.split('|');
         const toManual = document.getElementById('takeoff_manual').value;
-        if(!a[0] || !t[0] || !toManual) return alert("Lengkapi data rute!");
+        if(!a[0] || !t[0] || !toManual) return alert("Pilih Rute!");
 
         const dist = getDistance(parseFloat(a[0]), parseFloat(a[1]), parseFloat(t[0]), parseFloat(t[1]));
         const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
         const etaDate = new Date(new Date(toManual).getTime() + (eet * 60000));
 
         db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value || "UNIDENTIFIED",
+            pesawat: document.getElementById('pesawat').value || "A-0000",
             pob_qty: document.getElementById('pob_qty').value,
-            misi: document.getElementById('misi').value || "NO MISSION DATA",
+            misi: document.getElementById('misi').value || "LOGISTIK",
             takeoff_manual: toManual,
             warna: document.getElementById('warna').value,
             lat: parseFloat(a[0]), lng: parseFloat(a[1]),
