@@ -19,34 +19,35 @@
         #map-container { flex: 1; position: relative; background: #000; overflow: hidden; }
         #map { height: 100%; width: 100%; background: #011425; }
 
-        /* OVERLAY PENGUMUMAN FULL HEIGHT KANAN */
+        /* --- MODIFIKASI: OVERLAY FULL SCREEN PADA PETA --- */
         #announcement-overlay {
             position: absolute;
-            top: 0;
-            right: -420px; 
-            width: 400px;
+            top: -100%; /* Sembunyi di atas */
+            left: 0;
+            width: 100%;
             height: 100%;
-            background: rgba(0, 15, 30, 0.95);
+            background: rgba(0, 15, 30, 0.95); /* Gelap pekat sinematik */
             color: #00ff00;
-            padding: 20px;
+            padding: 60px 40px;
             z-index: 2000;
-            border-left: 4px solid #ff851b;
-            overflow: hidden; 
-            transition: right 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: top 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
+            align-items: center;
+            border-left: 5px solid #ff851b;
         }
 
         .scroll-up-text {
             display: block;
-            text-align: left;
+            text-align: center;
             position: relative;
-            animation: scrollUpFull 20s linear infinite; 
+            animation: scrollUpFull 18s linear infinite; 
             white-space: pre-wrap;
-            font-size: 1.5rem;
-            line-height: 1.8;
+            font-size: 2.8rem; /* Ukuran besar untuk instruksi komando */
+            line-height: 1.6;
+            width: 90%;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
         }
 
         @keyframes scrollUpFull {
@@ -54,30 +55,31 @@
             100% { transform: translateY(-120%); }
         }
 
-        /* UI SIDEBAR */
+        /* --- UI SIDEBAR STYLING --- */
         .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
         .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
         #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
         #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
 
         .tab-nav { display: flex; background: #002d5a; border-bottom: 2px solid #ff851b; }
-        .tab-nav button { flex: 1; padding: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; }
+        .tab-nav button { flex: 1; padding: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
         .btn-active { background: #ff851b !important; }
         .btn-inactive { background: #002d5a; opacity: 0.7; }
 
-        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 2px solid #113355; flex-shrink: 0; max-height: 55vh; }
+        /* FORM TRACKING */
+        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 2px solid #113355; flex-shrink: 0; max-height: 52vh; }
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.8rem; margin-bottom: 3px; color: #8cb4d6; font-weight: bold; text-transform: uppercase; }
         input, select, textarea { padding: 8px; font-size: 0.9rem; border-radius: 4px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
         
-        .btn-komando { background: #ff851b; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; width: 100%; text-transform: uppercase; margin-top: 5px; }
-        .btn-komando:hover { background: #e67616; }
+        .btn-komando { background: #ff851b; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 4px; width: 100%; text-transform: uppercase; margin-top: 5px; transition: 0.3s; }
+        .btn-komando:hover { background: #e67616; box-shadow: 0 0 10px rgba(255,133,27,0.5); }
 
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #00152b; }
         .misi-card { background: #002d5a; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 5px solid #ff851b; position: relative; }
         .misi-card h4 { margin: 0 0 5px 0; color: #ff851b; font-size: 1rem; }
         .misi-card p { margin: 2px 0; font-size: 0.85rem; color: #ccc; }
-        .btn-hapus { position: absolute; top: 10px; right: 10px; color: #ff4136; cursor: pointer; background: none; border: none; }
+        .btn-hapus { position: absolute; top: 10px; right: 10px; color: #ff4136; cursor: pointer; background: none; border: none; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -94,13 +96,12 @@
             <button onclick="bukaSlide(2)" id="btn-s2" class="btn-inactive"><i class="fa-solid fa-bullhorn"></i> PENGUMUMAN</button>
         </div>
 
-        <!-- SLIDE 1: MISI TRACKING -->
+        <!-- SLIDE 1: MISI TRACKING (DIBERSIHKAN & DIKEMBALIKAN) -->
         <div id="slide-1" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <div class="form-section">
-                <div class="input-group"><label>Misi / Logistik</label><input type="text" id="inp_misi" placeholder="Contoh: Amunisi Harwat"></div>
-                <div class="input-group"><label>Personel / Kurir</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
-                <div class="input-group"><label>Pesawat / No. Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules / A-1301"></div>
-                <div class="input-group"><label>Waktu Take Off</label><input type="datetime-local" id="inp_waktu"></div>
+                <div class="input-group"><label>Misi / Instruksi</label><input type="text" id="inp_misi" placeholder="Contoh: Dorlog Amunisi"></div>
+                <div class="input-group"><label>Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
+                <div class="input-group"><label>Pesawat / No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules / A-1301"></div>
                 <div class="input-group">
                     <label>Rute (Asal - Tujuan)</label>
                     <div style="display: flex; gap: 5px;">
@@ -116,33 +117,32 @@
         </div>
 
         <!-- SLIDE 2: PENGUMUMAN -->
-        <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 15px; overflow-y: auto;">
+        <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 20px; overflow-y: auto;">
             <div style="background: #002244; padding: 15px; border-radius: 8px; border: 1px solid #ff851b; margin-bottom: 20px;">
-                <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">INSTRUKSI BROADCAST</label>
+                <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI (FULL SCREEN)</label>
                 <textarea id="inp_pengumuman" style="width: 100%; height: 150px; font-family: sans-serif; resize: none;" placeholder="Tulis instruksi komando..."></textarea>
-                <button class="btn-komando" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> PUBLIKASIKAN</button>
+                <button class="btn-komando" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> KIRIM KE SELURUH MONITOR</button>
             </div>
             <div style="background: #002d5a; padding: 15px; border-radius: 8px; border-left: 5px solid #00ff00;">
-                <h3 style="margin: 0 0 10px 0; color: #00ff00; font-size: 0.9rem;">TEKS AKTIF:</h3>
+                <h3 style="margin: 0 0 10px 0; color: #00ff00; font-size: 0.9rem;">STATUS MONITOR:</h3>
                 <div id="display_pengumuman" style="font-size: 1.1rem; color: #fff; white-space: pre-wrap; font-weight: bold;"></div>
-                <button onclick="salinKeInput()" style="margin-top:10px; background:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">Edit Teks</button>
+                <button onclick="salinKeInput()" style="margin-top:10px; background:#007bff; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight: bold;">EDIT TEKS</button>
             </div>
         </div>
     </div>
 
     <div id="map-container">
+        <!-- OVERLAY FULL SCREEN PADA PETA -->
         <div id="announcement-overlay">
-            <h4 style="border-bottom: 2px solid #ff851b; color: #ff851b; margin-top: 0;"><i class="fa-solid fa-tower-broadcast"></i> INSTRUKSI KORPASGAT</h4>
-            <div style="position: relative; flex: 1; overflow: hidden;">
-                <div id="running-text-content" class="scroll-up-text">SIAGA LOGISTIK KORPASGAT</div>
-            </div>
+            <h1 style="border-bottom: 4px solid #ff851b; color: #ff851b; width: 100%; text-align: center; padding-bottom: 20px; margin-bottom: 40px;"><i class="fa-solid fa-tower-broadcast"></i> INSTRUKSI KOMANDO</h1>
+            <div id="running-text-content" class="scroll-up-text">SIAGA LOGISTIK KORPASGAT</div>
         </div>
         <div id="map"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // CONFIG FIREBASE
+        // FIREBASE INITIALIZATION
         const firebaseConfig = {
             apiKey: "AIzaSyBifnBivkGMG827wJGXhIDtjZ5EHNNtLp8",
             authDomain: "kodal-logistik-korpasgat.firebaseapp.com",
@@ -152,10 +152,11 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // MAP
+        // LEAFLET MAP
         const map = L.map('map').setView([-2.2, 118], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
+        // SLIDE NAVIGATION & OVERLAY CONTROL
         function bukaSlide(n) {
             const overlay = document.getElementById('announcement-overlay');
             if(n === 1) {
@@ -163,38 +164,36 @@
                 document.getElementById('slide-2').style.display = "none";
                 document.getElementById('btn-s1').className = "btn-active";
                 document.getElementById('btn-s2').className = "btn-inactive";
-                overlay.style.right = "-420px"; 
+                overlay.style.top = "-100%"; // Sembunyikan ke atas
             } else {
                 document.getElementById('slide-1').style.display = "none";
                 document.getElementById('slide-2').style.display = "flex";
                 document.getElementById('btn-s1').className = "btn-inactive";
                 document.getElementById('btn-s2').className = "btn-active";
-                overlay.style.right = "0"; 
+                overlay.style.top = "0"; // Muncul menutupi peta sepenuhnya
             }
         }
 
-        // FUNGSI TAMBAH MISI KE CLOUD
+        // LOGIKA MISI TRACKING
         function tambahMisi() {
             const misi = document.getElementById('inp_misi').value;
             const kurir = document.getElementById('inp_kurir').value;
             const pesawat = document.getElementById('inp_pesawat').value;
-            const waktu = document.getElementById('inp_waktu').value;
             const asal = document.getElementById('inp_asal').value;
             const tujuan = document.getElementById('inp_tujuan').value;
 
-            if(!misi || !kurir) return alert("Mohon lengkapi data misi!");
+            if(!misi || !kurir) return alert("Lengkapi data misi!");
 
             db.ref('misi_tracking').push({
-                misi, kurir, pesawat, waktu, asal, tujuan,
+                misi, kurir, pesawat, asal, tujuan,
                 timestamp: Date.now()
             });
 
-            // Reset Form
             document.getElementById('inp_misi').value = "";
             document.getElementById('inp_kurir').value = "";
+            document.getElementById('inp_pesawat').value = "";
         }
 
-        // SYNC MISI TRACKING REALTIME
         db.ref('misi_tracking').on('value', (snap) => {
             const listDiv = document.getElementById('misi-list');
             listDiv.innerHTML = "";
@@ -211,39 +210,44 @@
                         <h4><i class="fa-solid fa-box"></i> ${item.misi}</h4>
                         <p><i class="fa-solid fa-user-tie"></i> ${item.kurir}</p>
                         <p><i class="fa-solid fa-plane"></i> ${item.pesawat || '-'}</p>
-                        <p><i class="fa-solid fa-clock"></i> ${item.waktu ? new Date(item.waktu).toLocaleString('id-ID') : '-'}</p>
+                        <p><i class="fa-solid fa-route"></i> ${item.asal || '-'} ke ${item.tujuan || '-'}</p>
                     </div>
                 `;
             });
         });
 
         function hapusMisi(key) {
-            if(confirm("Hapus misi ini?")) db.ref('misi_tracking/' + key).remove();
+            if(confirm("Hapus data misi ini dari cloud?")) db.ref('misi_tracking/' + key).remove();
         }
 
-        // PENGUMUMAN LOGIC
+        // LOGIKA PENGUMUMAN
         function updatePengumuman() {
             const teks = document.getElementById('inp_pengumuman').value;
+            if(!teks) return alert("Pesan tidak boleh kosong!");
             db.ref('pengumuman_live').set({ isi: teks, waktu: new Date().toISOString() });
             document.getElementById('inp_pengumuman').value = "";
         }
 
         function salinKeInput() {
             document.getElementById('inp_pengumuman').value = document.getElementById('display_pengumuman').innerText;
+            document.getElementById('inp_pengumuman').focus();
         }
 
         db.ref('pengumuman_live').on('value', (snap) => {
             const val = snap.val();
-            const pesan = val ? val.isi : "SIAGA LOGISTIK KORPASGAT";
+            const pesan = val ? val.isi : "SIAGA LOGISTIK KORPASGAT\n---\nMONITORING AKTIF";
             document.getElementById('display_pengumuman').innerText = pesan;
+            
             const runText = document.getElementById('running-text-content');
             runText.innerText = pesan;
+            
+            // Restart animasi agar mulus
             runText.style.animation = 'none';
             runText.offsetHeight; 
             runText.style.animation = null;
         });
 
-        // JAM & DROPDOWN
+        // JAM & DROPDOWN RUTE
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
@@ -251,7 +255,7 @@
         }, 1000);
 
         function isiDropdown() {
-            const locs = ['Lanud Halim', 'Lanud Iswahjudi', 'Lanud Sulaiman', 'Lanud Atang Sendjaja'];
+            const locs = ['Lanud Halim', 'Lanud Iswahjudi', 'Lanud Sulaiman', 'Lanud Atang Sendjaja', 'Lanud Supadio', 'Lanud Sam Ratulangi'];
             const ids = ['inp_asal', 'inp_tujuan'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
