@@ -3,69 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kodal Logistik KORPASGAT - Radar Tracking</title>
+    <title>Kodal Logistik KORPASGAT</title>
     
-    <!-- Library Inti - Pastikan Internet Aktif -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #000; color: #fff; display: flex; height: 100vh; overflow: hidden; }
-        
-        #sidebar { width: 380px; background: #001f3f; border-right: 3px solid #ff851b; display: flex; flex-direction: column; z-index: 5000; }
+        body { margin: 0; padding: 0; display: flex; height: 100vh; background: #000; overflow: hidden; color: #fff; }
+        #sidebar { width: 380px; background: #001f3f; border-right: 3px solid #ff851b; z-index: 2000; display: flex; flex-direction: column; }
         .header { background: #002d5a; padding: 15px; text-align: center; border-bottom: 3px solid #ff851b; }
-        #clock { font-size: 2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; }
-
-        .form-container { padding: 15px; overflow-y: auto; flex: 1; }
-        .field { margin-bottom: 12px; }
-        .field label { display: block; font-size: 0.7rem; font-weight: bold; color: #8cb4d6; margin-bottom: 4px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 10px; background: #001224; border: 1px solid #ff851b; color: white; border-radius: 4px; font-weight: bold; }
+        #clock { font-size: 2rem; color: #00ff00; font-family: monospace; }
         
-        .btn-aktivasi { width: 100%; padding: 15px; background: #ff851b; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 1rem; }
-        .btn-aktivasi:hover { background: #e67616; }
+        .form-container { padding: 15px; flex: 1; overflow-y: auto; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-size: 10px; color: #8cb4d6; font-weight: bold; margin-bottom: 4px; }
+        input, select { width: 100%; padding: 10px; background: #001224; border: 1px solid #ff851b; color: white; font-weight: bold; }
+        
+        .btn-aktivasi { width: 100%; padding: 15px; background: #ff851b; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        
+        #map { flex: 1; background: #011425; }
 
-        /* AREA PETA - DIPAKSA TERLIHAT */
-        #map { flex: 1; height: 100vh !important; background: #011425; position: relative; z-index: 1; }
-
-        /* STYLING VEKTOR PESAWAT */
-        .plane-wrapper { text-align: center; }
-        .plane-tag { background: #00ff00; color: #000; padding: 1px 5px; border-radius: 3px; font-weight: bold; font-size: 11px; display: inline-block; border: 1px solid #fff; margin-bottom: 2px; }
-        .fa-plane { text-shadow: 0 0 5px #000; display: block; }
+        /* Style Pesawat Agar Selalu Di Atas */
+        .plane-marker { z-index: 1000 !important; }
+        .plane-div { text-align: center; width: 60px !important; }
+        .plane-label { background: rgba(0, 255, 0, 0.9); color: black; padding: 1px 4px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; white-space: nowrap; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
     <div id="sidebar">
         <div class="header">
-            <h2 style="margin:0; font-size:1rem; color:#ff851b;">KODAL LOGISTIK KORPASGAT</h2>
+            <h2 style="margin:0; font-size:0.9rem; color:#ff851b;">KODAL LOGISTIK KORPASGAT</h2>
             <div id="clock">00:00:00</div>
         </div>
-
         <div class="form-container">
-            <div class="field"><label>Misi / Muatan</label><input type="text" id="misi" value="AMUNISI"></div>
-            <div class="field"><label>POB (Personel)</label><input type="text" id="pob" value="ANAS"></div>
-            <div class="field"><label>Pesawat</label><input type="text" id="pesawat" value="A-1234"></div>
-            
-            <div style="background: rgba(255,133,27,0.1); padding: 10px; border-radius: 4px;">
-                <label style="color:#ff851b; font-size: 11px; font-weight: bold;">RUTE OPERASI</label>
-                <div class="field" style="margin-top:8px;"><select id="asal"></select></div>
-                <div class="field"><select id="tujuan"></select></div>
-            </div>
-
-            <button class="btn-aktivasi" onclick="kirimData()">🚀 AKTIVASI MISI RADAR</button>
-            <div id="status" style="color:#0f0; font-size:11px; text-align:center; margin-top:10px;">Ready</div>
+            <div class="field"><label>MISI / MUATAN</label><input type="text" id="misi" value="AMUNISI"></div>
+            <div class="field"><label>POB (PERSONEL)</label><input type="text" id="pob" value="ANAS"></div>
+            <div class="field"><label>PESAWAT</label><input type="text" id="pesawat" value="A-1234"></div>
+            <div class="field"><label>RUTE ASAL</label><select id="asal"></select></div>
+            <div class="field"><label>RUTE TUJUAN</label><select id="tujuan"></select></div>
+            <button class="btn-aktivasi" onclick="kirimMisi()">🚀 AKTIVASI MISI RADAR</button>
         </div>
-
-        <div id="list-misi" style="background:#00142a; padding:10px; max-height:150px; overflow-y:auto; border-top:1px solid #ff851b;"></div>
+        <div id="log" style="padding:10px; background:#00142a; font-size:11px;"></div>
     </div>
 
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             apiKey: "AIzaSyBifnBivkGMG827wJGXhIDtjZ5EHNNtLp8",
             authDomain: "kodal-logistik-korpasgat.firebaseapp.com",
@@ -75,99 +63,74 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Inisialisasi Peta
-        const map = L.map('map', { zoomControl: false }).setView([-2.2, 118], 5);
-        
-        // Layer Satelit
+        // Setup Peta
+        const map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        const bandara = [
-            { n: "Lanud HLP (Jakarta)", lat: -6.2655, lng: 106.8906 },
-            { n: "Lanud DMB (Balikpapan)", lat: -1.2683, lng: 116.8944 },
-            { n: "Lanud IWI (Madiun)", lat: -7.6158, lng: 111.4338 },
-            { n: "Lanud HND (Makassar)", lat: -5.0616, lng: 119.5539 },
-            { n: "Lanud MUN (Biak)", lat: -1.1911, lng: 136.1086 }
+        const pangkalan = [
+            { name: "Lanud HLP (Jakarta)", lat: -6.265, lng: 106.890 },
+            { name: "Lanud DMB (Balikpapan)", lat: -1.268, lng: 116.894 },
+            { name: "Lanud HND (Makassar)", lat: -5.061, lng: 119.553 }
         ];
 
-        let layersAktif = {};
+        let activeLayers = {};
 
-        // Real-time Update dari Database
-        db.ref('misi_logistik').on('value', (snapshot) => {
-            const data = snapshot.val();
-            
-            // Bersihkan peta
-            Object.values(layersAktif).forEach(l => { map.removeLayer(l.marker); map.removeLayer(l.route); });
-            layersAktif = {};
+        // Listener Real-time
+        db.ref('misi_radar').on('value', (snap) => {
+            const data = snap.val();
+            // Hapus semua marker lama sebelum gambar ulang
+            Object.values(activeLayers).forEach(obj => { map.removeLayer(obj.m); map.removeLayer(obj.p); });
+            activeLayers = {};
 
-            if(data) {
+            if (data) {
                 Object.keys(data).forEach(id => {
-                    const d = data[id];
+                    const val = data[id];
                     
-                    // 1. Gambar RUTE (Garis)
-                    const route = L.polyline([[d.lat, d.lng], [d.destLat, d.destLng]], {
-                        color: d.warna, weight: 3, dashArray: '10, 10', opacity: 0.8
+                    // Gambar Garis RUTE
+                    const path = L.polyline([[val.lat, val.lng], [val.dLat, val.dLng]], {
+                        color: '#00ff00', weight: 2, dashArray: '5, 10'
                     }).addTo(map);
 
-                    // 2. Gambar PESAWAT (Vektor)
-                    const icon = L.divIcon({
-                        className: 'plane-icon',
-                        html: `<div class="plane-wrapper">
-                                <span class="plane-tag">${d.pesawat}</span>
-                                <i class="fa-solid fa-plane" style="color:${d.warna}; font-size:28px; transform: rotate(45deg);"></i>
+                    // Gambar VEKTOR PESAWAT
+                    const planeIcon = L.divIcon({
+                        className: 'plane-marker',
+                        html: `<div class="plane-div">
+                                <div class="plane-label">${val.pesawat}</div>
+                                <i class="fa-solid fa-plane" style="color:#00ff00; font-size:24px; text-shadow: 2px 2px #000;"></i>
                                </div>`,
-                        iconSize: [50, 50], iconAnchor: [25, 25]
+                        iconSize: [60, 40], iconAnchor: [30, 20]
                     });
-                    const marker = L.marker([d.lat, d.lng], { icon: icon }).addTo(map);
 
-                    layersAktif[id] = { marker, route };
+                    const marker = L.marker([val.lat, val.lng], { icon: planeIcon }).addTo(map);
+                    activeLayers[id] = { m: marker, p: path };
                 });
             }
-            updateUI(data);
         });
 
-        function kirimData() {
+        function kirimMisi() {
             const a = document.getElementById('asal').value.split('|');
             const t = document.getElementById('tujuan').value.split('|');
-            if(!a[0] || !t[0]) return alert("Pilih rute terlebih dahulu!");
+            if(!a[0] || !t[0]) return alert("Pilih Rute!");
 
             const payload = {
                 misi: document.getElementById('misi').value,
-                pob: document.getElementById('pob').value,
                 pesawat: document.getElementById('pesawat').value,
                 lat: parseFloat(a[0]), lng: parseFloat(a[1]),
-                destLat: parseFloat(t[0]), destLng: parseFloat(t[1]),
-                warna: '#' + Math.floor(Math.random()*16777215).toString(16)
+                dLat: parseFloat(t[0]), dLng: parseFloat(t[1])
             };
-            
-            db.ref('misi_logistik').push(payload);
-            document.getElementById('status').innerText = "DATA TERKIRIM!";
-            setTimeout(() => document.getElementById('status').innerText = "Ready", 2000);
-            map.flyTo([payload.lat, payload.lng], 7);
-        }
 
-        function updateUI(data) {
-            const list = document.getElementById('list-misi');
-            list.innerHTML = "";
-            if(data) Object.keys(data).forEach(id => {
-                list.innerHTML += `<div style="background:#002d5a; padding:8px; margin-bottom:5px; border-left:4px solid ${data[id].warna}; font-size:12px;">
-                    <b>${data[id].misi}</b> (${data[id].pesawat})
-                    <button onclick="hapus('${id}')" style="float:right; color:red; background:none; border:none; cursor:pointer;">✖</button>
-                </div>`;
-            });
+            db.ref('misi_radar').push(payload);
+            map.flyTo([payload.lat, payload.lng], 8); // Auto-focus ke pesawat baru
         }
-
-        function hapus(id) { db.ref('misi_logistik/'+id).remove(); }
 
         function init() {
             ['asal', 'tujuan'].forEach(id => {
                 const sel = document.getElementById(id);
-                sel.innerHTML = `<option value="">-- Pilih Bandara --</option>`;
-                bandara.forEach(b => sel.innerHTML += `<option value="${b.lat}|${b.lng}">${b.n}</option>`);
+                sel.innerHTML = '<option value="">-- Pilih --</option>';
+                pangkalan.forEach(p => sel.innerHTML += `<option value="${p.lat}|${p.lng}">${p.name}</option>`);
             });
             setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); }, 1000);
-            
-            // Fix Peta Hitam: Paksa Leaflet menghitung ulang ukuran kontainer
-            setTimeout(() => { map.invalidateSize(); }, 1000);
+            setTimeout(() => map.invalidateSize(), 500);
         }
         init();
     </script>
