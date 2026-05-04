@@ -1,385 +1,398 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kodal Logistik KORPASGAT - Ultimate Cloud Tracking</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    
-    <!-- SDK FIREBASE -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kodal Logistik KORPASGAT - Ultimate Cloud Tracking</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    
+    <!-- SDK FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-    <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #000; color: white; display: flex; height: 100vh; overflow: hidden; }
-        
-        #sidebar { width: 460px; background: #001f3f; display: flex; flex-direction: column; border-right: 3px solid #ff851b; z-index: 1000; transition: 0.3s; }
-        #map-container { flex: 1; position: relative; background: #000; }
-        #map { height: 100%; width: 100%; background: #011425; }
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #000; color: white; display: flex; height: 100vh; overflow: hidden; }
+        
+        #sidebar { width: 460px; background: #001f3f; display: flex; flex-direction: column; border-right: 3px solid #ff851b; z-index: 1000; transition: 0.3s; }
+        #map-container { flex: 1; position: relative; background: #000; }
+        #map { height: 100%; width: 100%; background: #011425; }
 
-        .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
-        .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
-        
-        #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
-        #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
+        .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
+        .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
+        
+        #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
+        #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
 
-        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 38vh; }
-        .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
-        .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
-        
-        input, select { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
-        
-        button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; transition: 0.3s; }
-        button.btn-tambah:hover { background: #e67616; transform: scale(1.02); }
+        /* NAVIGASI TAB */
+        .tab-nav { display: flex; background: #002d5a; border-bottom: 2px solid #ff851b; }
+        .tab-nav button { flex: 1; padding: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
+        .btn-active { background: #ff851b !important; }
+        .btn-inactive { background: #002d5a; opacity: 0.7; }
 
-        .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
-        
-        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #113355; position: relative; transition: 0.5s; }
-        
-        .action-btns { position: absolute; top: 10px; right: 10px; display: flex; gap: 12px; }
-        .btn-edit { background: none; border: none; color: #ffc107; cursor: pointer; font-size: 1.1rem; }
-        .btn-cancel { background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; }
+        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 38vh; }
+        .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
+        
+        input, select, textarea { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
+        
+        button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; transition: 0.3s; }
+        button.btn-tambah:hover { background: #e67616; transform: scale(1.02); }
 
-        .card-main-body { display: flex; gap: 15px; align-items: center; margin-top: 10px; }
-        .card-main-body img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 3px solid; }
-        
-        .nav-time-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; background: rgba(0,0,0,0.5); margin-top: 10px; border-radius: 5px; padding: 8px; border: 1px solid #113355; }
-        .time-item { text-align: center; }
-        .time-label { font-size: 0.65rem; color: #8cb4d6; font-weight: bold; display: block; }
-        .time-val { font-family: monospace; font-size: 0.9rem; color: #00ff00; font-weight: bold; }
+        .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
+        
+        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #113355; position: relative; transition: 0.5s; }
+        
+        .action-btns { position: absolute; top: 10px; right: 10px; display: flex; gap: 12px; }
+        .btn-edit { background: none; border: none; color: #ffc107; cursor: pointer; font-size: 1.1rem; }
+        .btn-cancel { background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 1.2rem; }
 
-        .btn-focus-card { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; width: 100%; cursor: pointer; font-size: 0.9rem; margin-top: 10px; text-transform: uppercase; }
-        
-        .transit-alert { background: #ff851b; color: black; padding: 8px; text-align: center; font-weight: bold; margin-top: 10px; border-radius: 4px; animation: blink 1.5s infinite; font-size: 0.85rem; }
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.6;} 100% {opacity: 1;} }
+        .card-main-body { display: flex; gap: 15px; align-items: center; margin-top: 10px; }
+        .card-main-body img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 3px solid; }
+        
+        .nav-time-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; background: rgba(0,0,0,0.5); margin-top: 10px; border-radius: 5px; padding: 8px; border: 1px solid #113355; }
+        .time-item { text-align: center; }
+        .time-label { font-size: 0.65rem; color: #8cb4d6; font-weight: bold; display: block; }
+        .time-val { font-family: monospace; font-size: 0.9rem; color: #00ff00; font-weight: bold; }
 
-        .plane-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; transition: all 1s linear; }
-        .pilot-photo-map { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 10px #000; }
-        .serial-txt-map { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
+        .btn-focus-card { background: #007bff; color: white; border: none; padding: 10px; border-radius: 5px; font-weight: bold; width: 100%; cursor: pointer; font-size: 0.9rem; margin-top: 10px; text-transform: uppercase; }
+        
+        .transit-alert { background: #ff851b; color: black; padding: 8px; text-align: center; font-weight: bold; margin-top: 10px; border-radius: 4px; animation: blink 1.5s infinite; font-size: 0.85rem; }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.6;} 100% {opacity: 1;} }
 
-        /* MODIFIKASI TANDA BULAT KOTA */
-        .map-route-label { text-align: center; min-width: 100px; }
-        .airport-dot { width: 12px; height: 12px; background-color: #ff851b; border: 2px solid #fff; border-radius: 50%; margin: 0 auto 5px auto; box-shadow: 0 0 10px #ff851b; }
-        .step-badge { background: #ff851b; color: #000; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 3px; text-transform: uppercase; display: block; margin-bottom: 2px; box-shadow: 0 0 4px #000; }
-        .airport-txt { color: #ffee00; font-weight: bold; text-shadow: 2px 2px 4px #000; font-size: 13px; white-space: nowrap; }
+        .plane-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; transition: all 1s linear; }
+        .pilot-photo-map { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 10px #000; }
+        .serial-txt-map { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
 
-        @media (max-width: 768px) {
-            body { flex-direction: column; overflow: auto; }
-            #sidebar { width: 100%; height: auto; border-right: none; border-bottom: 3px solid #ff851b; order: 2; }
-            #map-container { width: 100%; height: 50vh; order: 1; flex: none; }
-            .form-section { max-height: none; }
-            .header h2 { font-size: 1.1rem; }
-            #clock-live { font-size: 1.8rem; }
-        }
-    </style>
+        .map-route-label { text-align: center; min-width: 100px; }
+        .airport-dot { width: 12px; height: 12px; background-color: #ff851b; border: 2px solid #fff; border-radius: 50%; margin: 0 auto 5px auto; box-shadow: 0 0 10px #ff851b; }
+        .step-badge { background: #ff851b; color: #000; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 3px; text-transform: uppercase; display: block; margin-bottom: 2px; box-shadow: 0 0 4px #000; }
+        .airport-txt { color: #ffee00; font-weight: bold; text-shadow: 2px 2px 4px #000; font-size: 13px; white-space: nowrap; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow: auto; }
+            #sidebar { width: 100%; height: auto; border-right: none; border-bottom: 3px solid #ff851b; order: 2; }
+            #map-container { width: 100%; height: 50vh; order: 1; flex: none; }
+            .form-section { max-height: none; }
+            .header h2 { font-size: 1.1rem; }
+            #clock-live { font-size: 1.8rem; }
+        }
+    </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <div class="header">
-            <h2>KODAL LOGISTIK KORPASGAT</h2>
-            <div id="date-live">-- --- ----</div>
-            <div id="clock-live">00:00:00</div>
-        </div>
+    <div id="sidebar">
+        <div class="header">
+            <h2>KODAL LOGISTIK KORPASGAT</h2>
+            <div id="date-live">-- --- ----</div>
+            <div id="clock-live">00:00:00</div>
+        </div>
 
-        <div class="form-section">
-            <input type="hidden" id="edit_fbId" value="">
-            <div class="input-group"><label>Misi / Logistik</label><input type="text" id="inp_barang" placeholder="Amunisi"></div>
-            <div class="input-group"><label>Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
-            <div class="input-group"><label>Jenis & No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules / A-1301"></div>
-            <div class="input-group"><label>Insert Foto</label><input type="file" id="inp_foto" accept="image/*"></div>
-            <div class="input-group"><label>Jadwal Take Off Awal (WIB)</label><input type="datetime-local" id="inp_waktu"></div>
-            
-            <label style="color: #ff851b; font-size: 0.8rem; font-weight: bold; margin: 5px 0; display: block;">NAVIGASI RUTE MULTI-TRANSIT</label>
-            <div class="input-group"><label>1. Asal</label><select id="inp_asal"></select></div>
-            <div class="input-group"><label>2. Transit 1</label><select id="inp_transit1"></select></div>
-            <div class="input-group"><label>3. Transit 2</label><select id="inp_transit2"></select></div>
-            <div class="input-group"><label>4. Tujuan Akhir</label><select id="inp_tujuan"></select></div>
-            <div class="input-group"><label>5. Kembali ke Base</label><select id="inp_kembali"></select></div>
-            
-            <button class="btn-tambah" id="btn_submit" onclick="prosesTambahPenerbangan()">🚀 AKTIVASI MISI CLOUD</button>
-        </div>
+        <!-- NAVIGASI SLIDE -->
+        <div class="tab-nav">
+            <button onclick="bukaSlide(1)" id="btn-s1" class="btn-active"><i class="fa-solid fa-plane-up"></i> MISI TRACKING</button>
+            <button onclick="bukaSlide(2)" id="btn-s2" class="btn-inactive"><i class="fa-solid fa-bullhorn"></i> PENGUMUMAN</button>
+        </div>
 
-        <div class="list-section" id="flight-list"></div>
-    </div>
+        <!-- SLIDE 1: TRACKING (KODE LAMA ANDA) -->
+        <div id="slide-1" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+            <div class="form-section">
+                <input type="hidden" id="edit_fbId" value="">
+                <div class="input-group"><label>Misi / Logistik</label><input type="text" id="inp_barang" placeholder="Amunisi"></div>
+                <div class="input-group"><label>Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
+                <div class="input-group"><label>Jenis & No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules / A-1301"></div>
+                <div class="input-group"><label>Insert Foto</label><input type="file" id="inp_foto" accept="image/*"></div>
+                <div class="input-group"><label>Jadwal Take Off Awal (WIB)</label><input type="datetime-local" id="inp_waktu"></div>
+                
+                <label style="color: #ff851b; font-size: 0.8rem; font-weight: bold; margin: 5px 0; display: block;">NAVIGASI RUTE MULTI-TRANSIT</label>
+                <div class="input-group"><label>1. Asal</label><select id="inp_asal"></select></div>
+                <div class="input-group"><label>2. Transit 1</label><select id="inp_transit1"></select></div>
+                <div class="input-group"><label>3. Transit 2</label><select id="inp_transit2"></select></div>
+                <div class="input-group"><label>4. Tujuan Akhir</label><select id="inp_tujuan"></select></div>
+                <div class="input-group"><label>5. Kembali ke Base</label><select id="inp_kembali"></select></div>
+                
+                <button class="btn-tambah" id="btn_submit" onclick="prosesTambahPenerbangan()">🚀 AKTIVASI MISI CLOUD</button>
+            </div>
+            <div class="list-section" id="flight-list"></div>
+        </div>
 
-    <div id="map-container"><div id="map"></div></div>
+        <!-- SLIDE 2: PENGUMUMAN (FITUR BARU) -->
+        <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 20px; overflow-y: auto;">
+            <div style="background: #002244; padding: 15px; border-radius: 8px; border: 1px solid #ff851b; margin-bottom: 20px;">
+                <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI</label>
+                <textarea id="inp_pengumuman" style="width: 100%; height: 120px; font-family: sans-serif; resize: none;" placeholder="Tulis pengumuman atau perintah komando di sini..."></textarea>
+                <button class="btn-tambah" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> KIRIM PENGUMUMAN</button>
+            </div>
+            
+            <div style="flex: 1; background: #002d5a; padding: 20px; border-radius: 8px; border-left: 5px solid #00ff00; box-shadow: inset 0 0 10px #000;">
+                <h3 style="margin-top: 0; color: #00ff00; font-size: 1rem;"><i class="fa-solid fa-tower-broadcast"></i> LIVE MONITOR:</h3>
+                <div id="display_pengumuman" style="font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-wrap; font-weight: bold;">Memuat data...</div>
+            </div>
+        </div>
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBifnBivkGMG827wJGXhIDtjZ5EHNNtLp8",
-            authDomain: "kodal-logistik-korpasgat.firebaseapp.com",
-            projectId: "kodal-logistik-korpasgat",
-            storageBucket: "kodal-logistik-korpasgat.firebasestorage.app",
-            messagingSenderId: "533092732764",
-            appId: "1:533092732764:web:ac77a04f83a12e69667b99",
-            databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com"
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const map = L.map('map').setView([-2.2, 118], 5);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+    <div id="map-container"><div id="map"></div></div>
 
-        const daftarBandara = [
-            { nama: "Sabang (SBG) - Lanud Maimun Saleh", lat: 5.8753, lng: 95.3375 },
-            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
-            { nama: "Medan (MES) - Lanud Soewondo", lat: 3.5623, lng: 98.6837 },
-            { nama: "Pekanbaru (PKU) - Lanud Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
-            { nama: "Ranai (NTX) - Lanud Raden Sadjad (Natuna)", lat: 3.9453, lng: 108.3871 },
-            { nama: "Palembang (PLM) - Lanud Sri Mulyono Herlambang", lat: -2.8981, lng: 104.7001 },
-            { nama: "Jakarta (HLP) - Lanud Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
-            { nama: "Bandung (BDO) - Lanud Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
-            { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
-            { nama: "Malang (MLG) - Lanud Abdul Rachman Saleh", lat: -7.9264, lng: 112.7135 },
-            { nama: "Pontianak (PNK) - Lanud Supadio", lat: -0.1507, lng: 109.4039 },
-            { nama: "Balikpapan (BPN) - Lanud Dhomber", lat: -1.2683, lng: 116.8944 },
-            { nama: "Tarakan (TRK) - Lanud Anang Busra", lat: 3.3262, lng: 117.5647 },
-            { nama: "Makassar (UPG) - Lanud Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
-            { nama: "Manado (MDC) - Lanud Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
-            { nama: "Denpasar (DPS) - Ngurah Rai", lat: -8.7481, lng: 115.1671 },
-            { nama: "Kupang (KOE) - Lanud El Tari", lat: -10.1705, lng: 123.6653 },
-            { nama: "Ambon (AMQ) - Lanud Pattimura", lat: -3.7049, lng: 128.0890 },
-            { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 },
-            { nama: "Jayapura (DJJ) - Lanud Silas Papare", lat: -2.5765, lng: 140.5158 },
-            { nama: "Timika (TIM) - Lanud Yohanis Kapiyau", lat: -4.5296, lng: 136.8870 },
-            { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
-        ];
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // KONFIGURASI FIREBASE ANDA
+        const firebaseConfig = {
+            apiKey: "AIzaSyBifnBivkGMG827wJGXhIDtjZ5EHNNtLp8",
+            authDomain: "kodal-logistik-korpasgat.firebaseapp.com",
+            projectId: "kodal-logistik-korpasgat",
+            storageBucket: "kodal-logistik-korpasgat.firebasestorage.app",
+            messagingSenderId: "533092732764",
+            appId: "1:533092732764:web:ac77a04f83a12e69667b99",
+            databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const map = L.map('map').setView([-2.2, 118], 5);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        let flights = [];
-        const SPEED_HERCULES = 540;
+        // DATA BANDARA (KODE LAMA)
+        const daftarBandara = [
+            { nama: "Sabang (SBG) - Lanud Maimun Saleh", lat: 5.8753, lng: 95.3375 },
+            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
+            { nama: "Medan (MES) - Lanud Soewondo", lat: 3.5623, lng: 98.6837 },
+            { nama: "Pekanbaru (PKU) - Lanud Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
+            { nama: "Ranai (NTX) - Lanud Raden Sadjad (Natuna)", lat: 3.9453, lng: 108.3871 },
+            { nama: "Palembang (PLM) - Lanud Sri Mulyono Herlambang", lat: -2.8981, lng: 104.7001 },
+            { nama: "Jakarta (HLP) - Lanud Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
+            { nama: "Bandung (BDO) - Lanud Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
+            { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
+            { nama: "Malang (MLG) - Lanud Abdul Rachman Saleh", lat: -7.9264, lng: 112.7135 },
+            { nama: "Pontianak (PNK) - Lanud Supadio", lat: -0.1507, lng: 109.4039 },
+            { nama: "Balikpapan (BPN) - Lanud Dhomber", lat: -1.2683, lng: 116.8944 },
+            { nama: "Tarakan (TRK) - Lanud Anang Busra", lat: 3.3262, lng: 117.5647 },
+            { nama: "Makassar (UPG) - Lanud Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
+            { nama: "Manado (MDC) - Lanud Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
+            { nama: "Denpasar (DPS) - Ngurah Rai", lat: -8.7481, lng: 115.1671 },
+            { nama: "Kupang (KOE) - Lanud El Tari", lat: -10.1705, lng: 123.6653 },
+            { nama: "Ambon (AMQ) - Lanud Pattimura", lat: -3.7049, lng: 128.0890 },
+            { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 },
+            { nama: "Jayapura (DJJ) - Lanud Silas Papare", lat: -2.5765, lng: 140.5158 },
+            { nama: "Timika (TIM) - Lanud Yohanis Kapiyau", lat: -4.5296, lng: 136.8870 },
+            { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
+        ];
 
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
-            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-        }
+        let flights = [];
+        const SPEED_HERCULES = 540;
 
-        db.ref('misi_logistik').on('value', (snapshot) => {
-            flights.forEach(f => { if(f.marker) map.removeLayer(f.marker); if(f.line) map.removeLayer(f.line); if(f.labels) f.labels.forEach(l => map.removeLayer(l)); });
-            flights = [];
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).forEach(id => {
-                    const f = data[id]; f.fbId = id; 
-                    initFlightMarker(f); flights.push(f);
-                });
-            }
-            renderSidebar();
-        });
+        // LOGIKA SLIDE (FITUR BARU)
+        function bukaSlide(n) {
+            const s1 = document.getElementById('slide-1');
+            const s2 = document.getElementById('slide-2');
+            const b1 = document.getElementById('btn-s1');
+            const b2 = document.getElementById('btn-s2');
 
-        function initFlightMarker(f) {
-            const markerHTML = `<div class="plane-wrapper" id="plane-${f.fbId}">
-                <div style="position:absolute; top:-100px; text-align:center; min-width:160px;">
-                    <img src="${f.fotoUrl}" class="pilot-photo-map">
-                    <div class="serial-txt-map">${f.pesawat}</div>
-                </div>
-                <svg viewBox="0 0 100 100" width="55" height="55" id="svg-${f.fbId}">
-                    <path d="M50 5 L90 90 L50 70 L10 90 Z" fill="${f.warna}" stroke="#fff" stroke-width="3"/>
-                </svg></div>`;
+            if(n === 1) {
+                s1.style.display = "flex";
+                s2.style.display = "none";
+                b1.className = "btn-active";
+                b2.className = "btn-inactive";
+            } else {
+                s1.style.display = "none";
+                s2.style.display = "flex";
+                b1.className = "btn-inactive";
+                b2.className = "btn-active";
+            }
+        }
 
-            const startPos = f.rute[f.currentStep || 0];
-            f.marker = L.marker([startPos.lat, startPos.lng], {
-                icon: L.divIcon({ html: markerHTML, className: 'p-marker', iconSize: [100, 100], iconAnchor: [50, 50] }), opacity: 0
-            }).addTo(map);
+        // UPDATE PENGUMUMAN (FITUR BARU)
+        function updatePengumuman() {
+            const teks = document.getElementById('inp_pengumuman').value;
+            if(!teks) { alert("Isi teks pengumuman!"); return; }
+            db.ref('pengumuman_live').set({ isi: teks, waktu: new Date().toISOString() })
+            .then(() => { alert("Pengumuman Broadcast Berhasil!"); document.getElementById('inp_pengumuman').value = ""; });
+        }
 
-            f.line = L.polyline(f.rute.map(r=>[r.lat, r.lng]), {
-                color: f.warna, 
-                weight: 4, 
-                dashArray: '15, 20', 
-                opacity: 0.8
-            }).addTo(map);
+        // LISTEN PENGUMUMAN (FITUR BARU)
+        db.ref('pengumuman_live').on('value', (snap) => {
+            const data = snap.val();
+            document.getElementById('display_pengumuman').innerText = data ? data.isi : "Belum ada pengumuman.";
+        });
 
-            // RENDER TITIK BULAT DAN LABEL KOTA
-            f.labels = f.rute.map((r, i) => {
-                let tagLabel = "";
-                if (i === 0) tagLabel = "ASAL";
-                else if (i === f.rute.length - 1) tagLabel = "AKHIR";
-                else tagLabel = "TRANSIT " + i;
+        // --- KELANJUTAN KODE LAMA ANDA ---
 
-                const labelHtml = `
-                    <div class="map-route-label">
-                        <div class="airport-dot"></div>
-                        <span class="step-badge">${tagLabel}</span>
-                        <span class="airport-txt">${r.nama.split('-')[0]}</span>
-                    </div>`;
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
 
-                return L.marker([r.lat, r.lng], {
-                    icon: L.divIcon({ html: labelHtml, className: 'airport-label', iconAnchor: [50, 6] })
-                }).addTo(map);
-            });
-        }
+        db.ref('misi_logistik').on('value', (snapshot) => {
+            flights.forEach(f => { if(f.marker) map.removeLayer(f.marker); if(f.line) map.removeLayer(f.line); if(f.labels) f.labels.forEach(l => map.removeLayer(l)); });
+            flights = [];
+            const data = snapshot.val();
+            if (data) {
+                Object.keys(data).forEach(id => {
+                    const f = data[id]; f.fbId = id; 
+                    initFlightMarker(f); flights.push(f);
+                });
+            }
+            renderSidebar();
+        });
 
-        async function prosesTambahPenerbangan() {
-            const fbId = document.getElementById('edit_fbId').value;
-            const barang = document.getElementById('inp_barang').value;
-            const kurir = document.getElementById('inp_kurir').value || "AU";
-            const pesawat = document.getElementById('inp_pesawat').value || "A-1301";
-            const waktuVal = document.getElementById('inp_waktu').value;
-            
-            if (!barang || !waktuVal) { alert("Mohon isi Misi dan Jadwal Take Off!"); return; }
+        function initFlightMarker(f) {
+            const markerHTML = `<div class="plane-wrapper" id="plane-${f.fbId}">
+                <div style="position:absolute; top:-100px; text-align:center; min-width:160px;">
+                    <img src="${f.fotoUrl}" class="pilot-photo-map">
+                    <div class="serial-txt-map">${f.pesawat}</div>
+                </div>
+                <svg viewBox="0 0 100 100" width="55" height="55" id="svg-${f.fbId}">
+                    <path d="M50 5 L90 90 L50 70 L10 90 Z" fill="${f.warna}" stroke="#fff" stroke-width="3"/>
+                </svg></div>`;
 
-            const file = document.getElementById('inp_foto').files[0];
-            let fotoUrl = document.getElementById('edit_fbId').dataset.oldFoto || "https://ui-avatars.com/api/?name=" + kurir.replace(' ','+');
-            if (file) { fotoUrl = await new Promise(r => { const f = new FileReader(); f.onload = e => r(e.target.result); f.readAsDataURL(file); }); }
+            const startPos = f.rute[f.currentStep || 0];
+            f.marker = L.marker([startPos.lat, startPos.lng], {
+                icon: L.divIcon({ html: markerHTML, className: 'p-marker', iconSize: [100, 100], iconAnchor: [50, 50] }), opacity: 0
+            }).addTo(map);
 
-            const ruteIds = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
-            const rute = [];
-            ruteIds.forEach(id => {
-                const val = document.getElementById(id).value;
-                if (val) { const d = val.split(','); rute.push({ lat: parseFloat(d[0]), lng: parseFloat(d[1]), nama: d[2], rawVal: val }); }
-            });
+            f.line = L.polyline(f.rute.map(r=>[r.lat, r.lng]), {
+                color: f.warna, weight: 4, dashArray: '15, 20', opacity: 0.8
+            }).addTo(map);
 
-            let oldData = fbId ? flights.find(x => x.fbId === fbId) : null;
+            f.labels = f.rute.map((r, i) => {
+                let tagLabel = i === 0 ? "ASAL" : (i === f.rute.length - 1 ? "AKHIR" : "TRANSIT " + i);
+                const labelHtml = `<div class="map-route-label"><div class="airport-dot"></div><span class="step-badge">${tagLabel}</span><span class="airport-txt">${r.nama.split('-')[0]}</span></div>`;
+                return L.marker([r.lat, r.lng], { icon: L.divIcon({ html: labelHtml, className: 'airport-label', iconAnchor: [50, 6] }) }).addTo(map);
+            });
+        }
 
-            const payload = {
-                barang, kurir, pesawat, fotoUrl, rute,
-                depTimeStr: new Date(waktuVal).toISOString(),
-                status: oldData ? oldData.status : "STANDBY",
-                currentStep: oldData ? oldData.currentStep : 0,
-                isWaiting: oldData ? oldData.isWaiting : true,
-                etd: oldData ? oldData.etd : "--:--", 
-                eta: oldData ? oldData.eta : "--:--", 
-                eet: oldData ? oldData.eet : "--:--",
-                lastTakeOffStr: oldData ? oldData.lastTakeOffStr : "",
-                nextEtaStr: oldData ? oldData.nextEtaStr : "",
-                warna: oldData ? oldData.warna : '#' + Math.floor(Math.random()*16777215).toString(16)
-            };
+        async function prosesTambahPenerbangan() {
+            const fbId = document.getElementById('edit_fbId').value;
+            const barang = document.getElementById('inp_barang').value;
+            const kurir = document.getElementById('inp_kurir').value || "AU";
+            const pesawat = document.getElementById('inp_pesawat').value || "A-1301";
+            const waktuVal = document.getElementById('inp_waktu').value;
+            if (!barang || !waktuVal) { alert("Mohon isi Misi dan Jadwal Take Off!"); return; }
 
-            if (fbId) { db.ref('misi_logistik/' + fbId).update(payload).then(() => resetForm()); }
-            else { db.ref('misi_logistik').push(payload).then(() => resetForm()); }
-        }
+            const file = document.getElementById('inp_foto').files[0];
+            let fotoUrl = document.getElementById('edit_fbId').dataset.oldFoto || "https://ui-avatars.com/api/?name=" + kurir.replace(' ','+');
+            if (file) { fotoUrl = await new Promise(r => { const f = new FileReader(); f.onload = e => r(e.target.result); f.readAsDataURL(file); }); }
 
-        function triggerTakeOff(id) {
-            const f = flights.find(x => x.fbId === id);
-            const now = new Date();
-            const p1 = f.rute[f.currentStep];
-            const p2 = f.rute[f.currentStep + 1];
-            const dist = calculateDistance(p1.lat, p1.lng, p2.lat, p2.lng);
-            
-            const hours = dist / SPEED_HERCULES;
-            const eetMinutes = Math.round(hours * 60);
-            const nextEta = new Date(now.getTime() + (hours * 3600000));
+            const ruteIds = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
+            const rute = [];
+            ruteIds.forEach(id => {
+                const val = document.getElementById(id).value;
+                if (val) { const d = val.split(','); rute.push({ lat: parseFloat(d[0]), lng: parseFloat(d[1]), nama: d[2], rawVal: val }); }
+            });
 
-            db.ref('misi_logistik/' + id).update({
-                isWaiting: false,
-                lastTakeOffStr: now.toISOString(),
-                nextEtaStr: nextEta.toISOString(),
-                etd: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                eta: nextEta.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                eet: eetMinutes + "m",
-                status: "IN_FLIGHT"
-            });
-        }
+            let oldData = fbId ? flights.find(x => x.fbId === fbId) : null;
+            const payload = {
+                barang, kurir, pesawat, fotoUrl, rute,
+                depTimeStr: new Date(waktuVal).toISOString(),
+                status: oldData ? oldData.status : "STANDBY",
+                currentStep: oldData ? oldData.currentStep : 0,
+                isWaiting: oldData ? oldData.isWaiting : true,
+                etd: oldData ? oldData.etd : "--:--", 
+                eta: oldData ? oldData.eta : "--:--", 
+                eet: oldData ? oldData.eet : "--:--",
+                lastTakeOffStr: oldData ? oldData.lastTakeOffStr : "",
+                nextEtaStr: oldData ? oldData.nextEtaStr : "",
+                warna: oldData ? oldData.warna : '#' + Math.floor(Math.random()*16777215).toString(16)
+            };
+            if (fbId) { db.ref('misi_logistik/' + fbId).update(payload).then(() => resetForm()); }
+            else { db.ref('misi_logistik').push(payload).then(() => resetForm()); }
+        }
 
-        function renderSidebar() {
-            const list = document.getElementById('flight-list'); list.innerHTML = "";
-            [...flights].reverse().forEach(f => {
-                const isLast = f.currentStep >= f.rute.length - 1;
-                const ruteTxt = f.rute.map((t, i) => `<span style="color:${i<=f.currentStep?'#00ff00':'#fff'}">${t.nama.split('-')[0].trim()}</span>`).join(' ➔ ');
+        function triggerTakeOff(id) {
+            const f = flights.find(x => x.fbId === id);
+            const now = new Date();
+            const p1 = f.rute[f.currentStep];
+            const p2 = f.rute[f.currentStep + 1];
+            const dist = calculateDistance(p1.lat, p1.lng, p2.lat, p2.lng);
+            const hours = dist / SPEED_HERCULES;
+            const eetMinutes = Math.round(hours * 60);
+            const nextEta = new Date(now.getTime() + (hours * 3600000));
 
-                let actionHtml = "";
-                if (isLast) {
-                    actionHtml = `<div style="color:#00ff00; font-weight:bold; text-align:center; margin-top:10px; border:1px solid #00ff00; padding:5px;">🏁 MISSION COMPLETE</div>`;
-                } else if (f.isWaiting) {
-                    actionHtml = `
-                        <div class="transit-alert">⚠️ ON GROUND: ${f.rute[f.currentStep].nama.split('-')[0]}</div>
-                        <button class="btn-tambah" style="background:#00ff00; color:black; margin-top:5px;" onclick="triggerTakeOff('${f.fbId}')">🛫 TAKE OFF NEXT LEG</button>`;
-                } else {
-                    actionHtml = `<button class="btn-focus-card" onclick="map.setView(flights.find(x=>x.fbId==='${f.fbId}').marker.getLatLng(), 8)">🎯 FOCUS PESAWAT</button>`;
-                }
+            db.ref('misi_logistik/' + id).update({
+                isWaiting: false,
+                lastTakeOffStr: now.toISOString(),
+                nextEtaStr: nextEta.toISOString(),
+                etd: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                eta: nextEta.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+                eet: eetMinutes + "m",
+                status: "IN_FLIGHT"
+            });
+        }
 
-                list.innerHTML += `
-                <div class="flight-card" style="border-left-color:${f.warna}">
-                    <div class="action-btns">
-                        <button class="btn-edit" onclick="editMisi('${f.fbId}')"><i class="fa-solid fa-pen-to-square"></i></button>
-                        <button class="btn-cancel" onclick="hapusMisi('${f.fbId}')"><i class="fa-solid fa-trash-can"></i></button>
-                    </div>
-                    <div style="font-size:0.75rem; font-weight:bold; margin-bottom:8px; padding-right:50px;">${ruteTxt}</div>
-                    <div class="card-main-body">
-                        <img src="${f.fotoUrl}" style="border-color:${f.warna}">
-                        <div>
-                            <div style="font-weight:bold; color:#ff851b; font-size:1rem;">${f.barang}</div>
-                            <div style="font-size:0.85rem; color:#fff;">${f.kurir} - <span style="color:#00ff00;">${f.pesawat}</span></div>
-                        </div>
-                    </div>
+        function renderSidebar() {
+            const list = document.getElementById('flight-list'); list.innerHTML = "";
+            [...flights].reverse().forEach(f => {
+                const isLast = f.currentStep >= f.rute.length - 1;
+                const ruteTxt = f.rute.map((t, i) => `<span style="color:${i<=f.currentStep?'#00ff00':'#fff'}">${t.nama.split('-')[0].trim()}</span>`).join(' ➔ ');
+                let actionHtml = isLast ? `<div style="color:#00ff00; font-weight:bold; text-align:center; margin-top:10px; border:1px solid #00ff00; padding:5px;">🏁 MISSION COMPLETE</div>` : 
+                                 (f.isWaiting ? `<div class="transit-alert">⚠️ ON GROUND: ${f.rute[f.currentStep].nama.split('-')[0]}</div><button class="btn-tambah" style="background:#00ff00; color:black; margin-top:5px;" onclick="triggerTakeOff('${f.fbId}')">🛫 TAKE OFF NEXT LEG</button>` : 
+                                 `<button class="btn-focus-card" onclick="map.setView(flights.find(x=>x.fbId==='${f.fbId}').marker.getLatLng(), 8)">🎯 FOCUS PESAWAT</button>`);
 
-                    <div class="nav-time-panel">
-                        <div class="time-item"><span class="time-label">ETD</span><span class="time-val">${f.etd || '--:--'}</span></div>
-                        <div class="time-item"><span class="time-label">EET</span><span class="time-val">${f.eet || '--:--'}</span></div>
-                        <div class="time-item"><span class="time-label">ETA</span><span class="time-val">${f.eta || '--:--'}</span></div>
-                    </div>
+                list.innerHTML += `<div class="flight-card" style="border-left-color:${f.warna}">
+                    <div class="action-btns">
+                        <button class="btn-edit" onclick="editMisi('${f.fbId}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn-cancel" onclick="hapusMisi('${f.fbId}')"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                    <div style="font-size:0.75rem; font-weight:bold; margin-bottom:8px; padding-right:50px;">${ruteTxt}</div>
+                    <div class="card-main-body"><img src="${f.fotoUrl}" style="border-color:${f.warna}"><div><div style="font-weight:bold; color:#ff851b; font-size:1rem;">${f.barang}</div><div style="font-size:0.85rem; color:#fff;">${f.kurir} - <span style="color:#00ff00;">${f.pesawat}</span></div></div></div>
+                    <div class="nav-time-panel">
+                        <div class="time-item"><span class="time-label">ETD</span><span class="time-val">${f.etd || '--:--'}</span></div>
+                        <div class="time-item"><span class="time-label">EET</span><span class="time-val">${f.eet || '--:--'}</span></div>
+                        <div class="time-item"><span class="time-label">ETA</span><span class="time-val">${f.eta || '--:--'}</span></div>
+                    </div>${actionHtml}</div>`;
+            });
+        }
 
-                    ${actionHtml}
-                </div>`;
-            });
-        }
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
+            document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+            flights.forEach(f => {
+                if (f.isWaiting || f.currentStep >= f.rute.length - 1) { f.marker.setLatLng([f.rute[f.currentStep].lat, f.rute[f.currentStep].lng]).setOpacity(1); return; }
+                const startTime = new Date(f.lastTakeOffStr); const endTime = new Date(f.nextEtaStr);
+                if (now >= endTime) { db.ref('misi_logistik/' + f.fbId).update({ isWaiting: true, currentStep: f.currentStep + 1, status: "LANDED" }); } 
+                else {
+                    f.marker.setOpacity(1); const progress = (now - startTime) / (endTime - startTime);
+                    const p1 = f.rute[f.currentStep]; const p2 = f.rute[f.currentStep + 1];
+                    const lat = p1.lat + (p2.lat - p1.lat) * progress; const lng = p1.lng + (p2.lng - p1.lng) * progress;
+                    f.marker.setLatLng([lat, lng]);
+                    const svg = document.getElementById(`svg-${f.fbId}`);
+                    if(svg) { const angle = Math.atan2(p2.lng - p1.lng, p2.lat - p1.lat) * 180 / Math.PI; svg.style.transform = `rotate(${angle}deg)`; }
+                }
+            });
+        }, 1000);
 
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
-            document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+        function editMisi(id) {
+            const f = flights.find(x => x.fbId === id);
+            document.getElementById('edit_fbId').value = f.fbId;
+            document.getElementById('inp_barang').value = f.barang;
+            document.getElementById('inp_kurir').value = f.kurir;
+            document.getElementById('inp_pesawat').value = f.pesawat;
+            const dt = new Date(f.depTimeStr); dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+            document.getElementById('inp_waktu').value = dt.toISOString().slice(0,16);
+            const ids = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
+            ids.forEach((id, idx) => { document.getElementById(id).value = f.rute[idx] ? f.rute[idx].rawVal : ""; });
+            document.getElementById('btn_submit').innerText = "💾 UPDATE MISI";
+        }
 
-            flights.forEach(f => {
-                if (f.isWaiting || f.currentStep >= f.rute.length - 1) {
-                    const pos = f.rute[f.currentStep];
-                    f.marker.setLatLng([pos.lat, pos.lng]).setOpacity(1);
-                    return;
-                }
-                const startTime = new Date(f.lastTakeOffStr);
-                const endTime = new Date(f.nextEtaStr);
-                if (now >= endTime) {
-                    db.ref('misi_logistik/' + f.fbId).update({ isWaiting: true, currentStep: f.currentStep + 1, status: "LANDED" });
-                } else {
-                    f.marker.setOpacity(1);
-                    const progress = (now - startTime) / (endTime - startTime);
-                    const p1 = f.rute[f.currentStep];
-                    const p2 = f.rute[f.currentStep + 1];
-                    const lat = p1.lat + (p2.lat - p1.lat) * progress;
-                    const lng = p1.lng + (p2.lng - p1.lng) * progress;
-                    f.marker.setLatLng([lat, lng]);
-                    const svg = document.getElementById(`svg-${f.fbId}`);
-                    if(svg) { const angle = Math.atan2(p2.lng - p1.lng, p2.lat - p1.lat) * 180 / Math.PI; svg.style.transform = `rotate(${angle}deg)`; }
-                }
-            });
-        }, 1000);
+        function resetForm() {
+            document.getElementById('edit_fbId').value = ""; document.getElementById('inp_barang').value = "";
+            document.getElementById('inp_kurir').value = ""; document.getElementById('inp_pesawat').value = "";
+            document.getElementById('btn_submit').innerText = "🚀 AKTIVASI MISI CLOUD";
+        }
 
-        function editMisi(id) {
-            const f = flights.find(x => x.fbId === id);
-            document.getElementById('edit_fbId').value = f.fbId;
-            document.getElementById('inp_barang').value = f.barang;
-            document.getElementById('inp_kurir').value = f.kurir;
-            document.getElementById('inp_pesawat').value = f.pesawat;
-            const dt = new Date(f.depTimeStr);
-            dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
-            document.getElementById('inp_waktu').value = dt.toISOString().slice(0,16);
-            const ids = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
-            ids.forEach((id, idx) => { document.getElementById(id).value = f.rute[idx] ? f.rute[idx].rawVal : ""; });
-            document.getElementById('btn_submit').innerText = "💾 UPDATE MISI";
-        }
+        function hapusMisi(id) { if(confirm("Hapus misi?")) db.ref('misi_logistik/' + id).remove(); }
 
-        function resetForm() {
-            document.getElementById('edit_fbId').value = "";
-            document.getElementById('inp_barang').value = "";
-            document.getElementById('inp_kurir').value = "";
-            document.getElementById('inp_pesawat').value = "";
-            document.getElementById('btn_submit').innerText = "🚀 AKTIVASI MISI CLOUD";
-        }
-
-        function hapusMisi(id) { if(confirm("Hapus misi?")) db.ref('misi_logistik/' + id).remove(); }
-
-        function isiDropdown() {
-            const ids = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
-            ids.forEach(id => {
-                const sel = document.getElementById(id);
-                if(!id.includes('asal') && !id.includes('tujuan')) sel.innerHTML = '<option value="">-- Lewati --</option>';
-                daftarBandara.forEach(b => { sel.innerHTML += `<option value="${b.lat},${b.lng},${b.nama}">${b.nama}</option>`; });
-            });
-        }
-        isiDropdown();
-    </script>
+        function isiDropdown() {
+            const ids = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
+            ids.forEach(id => {
+                const sel = document.getElementById(id);
+                if(!id.includes('asal') && !id.includes('tujuan')) sel.innerHTML = '<option value="">-- Lewati --</option>';
+                daftarBandara.forEach(b => { sel.innerHTML += `<option value="${b.lat},${b.lng},${b.nama}">${b.nama}</option>`; });
+            });
+        }
+        isiDropdown();
+    </script>
 </body>
 </html>
