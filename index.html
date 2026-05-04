@@ -19,6 +19,7 @@
         #map-container { flex: 1; position: relative; background: #000; overflow: hidden; }
         #map { height: 100%; width: 100%; background: #011425; }
 
+        /* OVERLAY FULL LAYAR PETA */
         #announcement-overlay {
             position: absolute;
             top: -100%; 
@@ -56,26 +57,61 @@
             100% { transform: translateY(-120%); } 
         }
 
-        .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
-        .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
+        /* STYLE SIDEBAR SESUAI GAMBAR */
+        .header { background: #001f3f; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
+        .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; font-weight: 900; }
         #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
-        #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
+        #clock-live { font-size: 2.5rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
 
-        .tab-nav { display: flex; background: #002d5a; border-bottom: 2px solid #ff851b; }
-        .tab-nav button { flex: 1; padding: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
+        .tab-nav { display: flex; background: #001f3f; }
+        .tab-nav button { flex: 1; padding: 12px; border: 1px solid #ff851b; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; font-size: 0.8rem; text-transform: uppercase; }
         .btn-active { background: #ff851b !important; }
-        .btn-inactive { background: #002d5a; opacity: 0.7; }
+        .btn-inactive { background: #001f3f; opacity: 0.7; }
 
-        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 38vh; }
-        .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
-        .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
-        input, select, textarea { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
+        .form-section { padding: 15px; background: #001f3f; border-bottom: 2px solid #ff851b; }
+        .input-group { margin-bottom: 12px; display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.85rem; margin-bottom: 6px; color: #fff; font-weight: bold; }
         
-        button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; transition: 0.3s; }
-        
-        /* Style Tambahan untuk Tombol Edit */
-        button.btn-edit { background: #555; color: white; border: 1px solid #777; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 0.9rem; margin-top: 8px; transition: 0.3s; }
-        button.btn-edit:hover { background: #666; }
+        input, textarea { 
+            padding: 10px; 
+            font-size: 0.95rem; 
+            border-radius: 4px; 
+            border: 1px solid #ff851b; 
+            background: #001224; 
+            color: white; 
+        }
+
+        /* Tombol Utama Oranye */
+        button.btn-aktivasi { 
+            background: #ff851b; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            width: 100%; 
+            font-size: 1rem; 
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* Tombol Edit Abu-abu */
+        button.btn-edit { 
+            background: #444; 
+            color: white; 
+            border: 1px solid #666; 
+            padding: 10px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            width: 100%; 
+            font-size: 0.85rem; 
+            margin-top: 8px;
+        }
 
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
     </style>
@@ -83,43 +119,58 @@
 <body>
 
     <div id="sidebar">
+        <!-- HEADER JAM & TANGGAL -->
         <div class="header">
             <h2>KODAL LOGISTIK KORPASGAT</h2>
             <div id="date-live">-- --- ----</div>
             <div id="clock-live">00:00:00</div>
         </div>
 
+        <!-- NAVIGASI TAB -->
         <div class="tab-nav">
-            <button onclick="bukaSlide(1)" id="btn-s1" class="btn-active"><i class="fa-solid fa-plane-up"></i> MISI TRACKING</button>
+            <button onclick="bukaSlide(1)" id="btn-s1" class="btn-active">MISI TRACKING</button>
             <button onclick="bukaSlide(2)" id="btn-s2" class="btn-inactive"><i class="fa-solid fa-bullhorn"></i> PENGUMUMAN</button>
         </div>
 
-        <!-- TRACKING SLIDE -->
-        <div id="slide-1" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+        <!-- SLIDE 1: MISI TRACKING (SESUAI GAMBAR) -->
+        <div id="slide-1" style="display: flex; flex-direction: column; flex: 1;">
             <div class="form-section">
-                <div class="input-group"><label>Instruksi / Misi</label><input type="text" id="inp_barang" placeholder="Target Misi"></div>
-                <div class="input-group"><label>Personel</label><input type="text" id="inp_kurir" placeholder="Nama Personel"></div>
-                <button class="btn-tambah">🚀 AKTIVASI TRACKING</button>
+                <div class="input-group">
+                    <label>Instruksi / Misi</label>
+                    <input type="text" id="inp_misi" placeholder="Target Misi">
+                </div>
+                <div class="input-group">
+                    <label>Personel</label>
+                    <input type="text" id="inp_personel" placeholder="Nama Personel">
+                </div>
+                <button class="btn-aktivasi">
+                    <i class="fa-solid fa-rocket"></i> AKTIVASI TRACKING
+                </button>
             </div>
-            <div class="list-section" id="flight-list"></div>
+            <div class="list-section">
+                <!-- List tracking akan muncul di sini -->
+            </div>
         </div>
 
-        <!-- PENGUMUMAN SLIDE -->
-        <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 20px; overflow-y: auto;">
-            <div style="background: #002244; padding: 15px; border-radius: 8px; border: 1px solid #ff851b; margin-bottom: 20px;">
+        <!-- SLIDE 2: PENGUMUMAN -->
+        <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 20px;">
+            <div style="background: #001f3f; padding: 15px; border-radius: 4px; border: 1px solid #ff851b; margin-bottom: 20px;">
                 <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI (Full Layar Peta)</label>
-                <textarea id="inp_pengumuman" style="width: 100%; height: 120px; font-family: sans-serif; resize: none;" placeholder="Tulis pesan komando di sini..."></textarea>
+                <textarea id="inp_pengumuman" style="width: 100%; height: 100px; resize: none;" placeholder="Tulis pesan komando di sini..."></textarea>
                 
-                <!-- Tombol Kirim Tetap Ada -->
-                <button class="btn-tambah" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> KIRIM KE SELURUH MONITOR</button>
+                <button class="btn-aktivasi" style="margin-top: 10px;" onclick="updatePengumuman()">
+                    <i class="fa-solid fa-paper-plane"></i> KIRIM KE SELURUH MONITOR
+                </button>
                 
-                <!-- TOMBOL EDIT BARU DIGABUNGKAN DISINI -->
-                <button class="btn-edit" onclick="tarikUntukEdit()"><i class="fa-solid fa-pen-to-square"></i> EDIT INSTRUKSI AKTIF</button>
+                <!-- TOMBOL EDIT -->
+                <button class="btn-edit" onclick="tarikUntukEdit()">
+                    <i class="fa-solid fa-pen-to-square"></i> EDIT INSTRUKSI AKTIF
+                </button>
             </div>
             
-            <div style="flex: 1; background: #002d5a; padding: 20px; border-radius: 8px; border-left: 5px solid #00ff00;">
-                <h3 style="margin-top: 0; color: #00ff00; font-size: 1rem;"><i class="fa-solid fa-tower-broadcast"></i> MONITOR AKTIF:</h3>
-                <div id="display_pengumuman" style="font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-wrap; font-weight: bold;">Menunggu Data...</div>
+            <div style="background: #002d5a; padding: 15px; border-radius: 4px; border-left: 5px solid #00ff00;">
+                <h3 style="margin-top: 0; color: #00ff00; font-size: 0.9rem; text-transform: uppercase;">📡 Monitor Aktif:</h3>
+                <div id="display_pengumuman" style="font-size: 1.1rem; line-height: 1.5; color: #fff; white-space: pre-wrap; font-weight: bold;">Menunggu Data...</div>
             </div>
         </div>
     </div>
@@ -143,9 +194,11 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // INISIALISASI PETA
         const map = L.map('map').setView([-2.2, 118], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
+        // KONTROL TAB
         function bukaSlide(n) {
             const overlay = document.getElementById('announcement-overlay');
             if(n === 1) {
@@ -163,6 +216,7 @@
             }
         }
 
+        // UPDATE PENGUMUMAN KE FIREBASE
         function updatePengumuman() {
             const teks = document.getElementById('inp_pengumuman').value;
             if(!teks) return alert("Masukkan Instruksi!");
@@ -173,34 +227,31 @@
             document.getElementById('inp_pengumuman').value = "";
         }
 
-        // FUNGSI BARU: TARIK TEKS DARI MONITOR KE INPUT
+        // FUNGSI EDIT: TARIK TEKS KE INPUT
         function tarikUntukEdit() {
             const teksAktif = document.getElementById('display_pengumuman').innerText;
-            if(teksAktif === "Menunggu Data..." || teksAktif === "") {
-                return alert("Tidak ada pesan aktif untuk diedit!");
-            }
+            if(teksAktif === "Menunggu Data..." || teksAktif === "") return alert("Pesan kosong!");
             document.getElementById('inp_pengumuman').value = teksAktif;
             document.getElementById('inp_pengumuman').focus();
         }
 
+        // SYNC FIREBASE REALTIME
         db.ref('pengumuman_live').on('value', (snap) => {
             const data = snap.val();
             const pesan = data ? data.isi : "KOMANDO PASUKAN GERAK CEPAT\nLOGISTIK SIAGA";
-            
             document.getElementById('display_pengumuman').innerText = pesan;
-            
             const runText = document.getElementById('running-text-content');
             runText.innerText = pesan; 
-            
             runText.style.animation = 'none';
             runText.offsetHeight; 
             runText.style.animation = null;
         });
 
+        // JAM DIGITAL KODAL
         setInterval(() => {
             const now = new Date();
-            document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
-            document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+            document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID', { hour12: false }).replace(/\./g, ':');
+            document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'}).toUpperCase();
         }, 1000);
     </script>
 </body>
