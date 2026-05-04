@@ -19,39 +19,39 @@
         #map-container { flex: 1; position: relative; background: #000; overflow: hidden; }
         #map { height: 100%; width: 100%; background: #011425; }
 
-        /* --- MODIFIKASI RUNNING TEXT: MENGGULUNG KE ATAS --- */
+        /* --- MODIFIKASI: PENGUMUMAN FULL HEIGHT (VERTICAL) --- */
         #announcement-overlay {
             position: absolute;
-            top: -150px; /* Sembunyi lebih jauh karena box lebih tinggi */
-            left: 10px;
-            right: 10px;
-            height: 120px; /* Box lebih tinggi untuk teks multi-baris */
-            background: rgba(0, 20, 40, 0.85); 
+            top: 0;
+            right: -400px; /* Sembunyi di kanan saat awal */
+            width: 380px;
+            height: 100%; /* Lebar sampai bawah */
+            background: rgba(0, 20, 40, 0.9); 
             color: #00ff00;
-            padding: 10px;
+            padding: 20px;
             z-index: 2000;
-            border: 2px solid #ff851b;
-            border-radius: 8px;
+            border-left: 3px solid #ff851b;
             overflow: hidden; 
-            transition: top 0.5s ease-in-out;
+            transition: right 0.5s ease-in-out;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
         }
 
         .scroll-up-text {
             display: block;
-            text-align: center;
+            text-align: left;
             position: relative;
-            animation: scrollUp 10s linear infinite; 
-            white-space: pre-wrap; /* Mendukung enter/baris baru */
+            animation: scrollUp 15s linear infinite; 
+            white-space: pre-wrap; /* Multi-baris */
             font-size: 1.4rem;
             line-height: 1.8;
             width: 100%;
+            font-weight: bold;
         }
 
         @keyframes scrollUp {
-            0% { top: 120px; }
-            100% { top: -200px; } /* Sesuaikan tergantung panjang teks */
+            0% { top: 100%; }
+            100% { top: -120%; }
         }
         /* -------------------------------------------------- */
 
@@ -65,11 +65,14 @@
         .btn-active { background: #ff851b !important; }
         .btn-inactive { background: #002d5a; opacity: 0.7; }
 
-        .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 38vh; }
+        .form-section { padding: 15px; background: #002244; overflow-y: auto; flex-shrink: 0; }
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
         input, select, textarea { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
-        button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; transition: 0.3s; }
+        
+        .btn-kirim { background: #ff851b; color: white; border: none; padding: 12px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; margin-top: 5px; }
+        .btn-edit-tool { background: #007bff; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-top: 10px; }
+
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
     </style>
 </head>
@@ -89,41 +92,40 @@
 
         <div id="slide-1" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <div class="form-section">
-                <div class="input-group"><label>Misi / Logistik</label><input type="text" id="inp_barang" placeholder="Amunisi"></div>
-                <div class="input-group"><label>Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
-                <div class="input-group"><label>Jenis & No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules / A-1301"></div>
-                <div class="input-group"><label>Jadwal Take Off Awal (WIB)</label><input type="datetime-local" id="inp_waktu"></div>
-                <div class="input-group"><label>1. Asal</label><select id="inp_asal"></select></div>
-                <div class="input-group"><label>4. Tujuan Akhir</label><select id="inp_tujuan"></select></div>
-                <button class="btn-tambah" onclick="alert('Fungsi Tambah Aktif')">🚀 AKTIVASI MISI CLOUD</button>
+                <p style="text-align: center; color: #8cb4d6;">Fitur Tracking Aktif</p>
             </div>
-            <div class="list-section" id="flight-list"></div>
         </div>
 
-        <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 20px; overflow-y: auto;">
-            <div style="background: #002244; padding: 15px; border-radius: 8px; border: 1px solid #ff851b; margin-bottom: 20px;">
-                <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI (Gunakan Enter untuk Baris Baru)</label>
-                <textarea id="inp_pengumuman" style="width: 100%; height: 120px; font-family: sans-serif; resize: none;" placeholder="Tulis instruksi komando..."></textarea>
-                <button class="btn-tambah" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> KIRIM PENGUMUMAN</button>
+        <!-- SLIDE 2: PENGUMUMAN DENGAN FITUR EDIT -->
+        <div id="slide-2" style="display: none; flex-direction: column; flex: 1; padding: 15px; overflow-y: auto;">
+            <div style="background: #002244; padding: 15px; border-radius: 8px; border: 1px solid #ff851b;">
+                <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI</label>
+                <textarea id="inp_pengumuman" style="width: 100%; height: 150px; font-family: sans-serif; resize: none;" placeholder="Tulis instruksi komando..."></textarea>
+                <button class="btn-kirim" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> PUBLIKASIKAN</button>
             </div>
-            <div style="flex: 1; background: #002d5a; padding: 20px; border-radius: 8px; border-left: 5px solid #00ff00;">
-                <h3 style="margin-top: 0; color: #00ff00; font-size: 1rem;"><i class="fa-solid fa-tower-broadcast"></i> SIDEBAR DISPLAY:</h3>
-                <div id="display_pengumuman" style="font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-wrap; font-weight: bold;">Memuat data...</div>
+
+            <div style="margin-top: 20px; background: #002d5a; padding: 15px; border-radius: 8px; border-left: 5px solid #00ff00;">
+                <h3 style="margin: 0 0 10px 0; color: #00ff00; font-size: 0.9rem;">STATUS SAAT INI:</h3>
+                <div id="display_pengumuman" style="font-size: 1.1rem; color: #fff; white-space: pre-wrap;"></div>
+                <!-- TOMBOL EDIT -->
+                <button class="btn-edit-tool" onclick="salinKeInput()"><i class="fa-solid fa-pen-to-square"></i> Edit Teks Terakhir</button>
             </div>
         </div>
     </div>
 
     <div id="map-container">
+        <!-- OVERLAY VERTIKAL KANAN -->
         <div id="announcement-overlay">
-            <!-- Teks akan menggulung ke atas di sini -->
-            <div id="running-text-content" class="scroll-up-text">Menunggu instruksi komando...</div>
+            <h4 style="border-bottom: 1px solid #ff851b; padding-bottom: 5px; color: #ff851b;"><i class="fa-solid fa-bolt"></i> FLASH INFO</h4>
+            <div id="scroll-container" style="position: relative; flex: 1; overflow: hidden;">
+                <div id="running-text-content" class="scroll-up-text">Menunggu instruksi komando...</div>
+            </div>
         </div>
         <div id="map"></div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBifnBivkGMG827wJGXhIDtjZ5EHNNtLp8",
             authDomain: "kodal-logistik-korpasgat.firebaseapp.com",
@@ -133,11 +135,9 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // INISIALISASI PETA
         const map = L.map('map').setView([-2.2, 118], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        // NAVIGASI & OVERLAY CONTROL
         function bukaSlide(n) {
             const overlay = document.getElementById('announcement-overlay');
             if(n === 1) {
@@ -145,58 +145,53 @@
                 document.getElementById('slide-2').style.display = "none";
                 document.getElementById('btn-s1').className = "btn-active";
                 document.getElementById('btn-s2').className = "btn-inactive";
-                overlay.style.top = "-150px"; 
+                overlay.style.right = "-400px"; 
             } else {
                 document.getElementById('slide-1').style.display = "none";
                 document.getElementById('slide-2').style.display = "flex";
                 document.getElementById('btn-s1').className = "btn-inactive";
                 document.getElementById('btn-s2').className = "btn-active";
-                overlay.style.top = "20px"; // Muncul di atas peta
+                overlay.style.right = "0"; 
             }
         }
 
-        // UPDATE KE FIREBASE
         function updatePengumuman() {
             const teks = document.getElementById('inp_pengumuman').value;
-            if(!teks) return alert("Isi teks instruksi!");
-            db.ref('pengumuman_live').set({ isi: teks, waktu: new Date().toISOString() });
+            if(!teks) return alert("Pesan kosong!");
+            db.ref('pengumuman_live').set({ 
+                isi: teks, 
+                waktu: new Date().toISOString() 
+            });
             document.getElementById('inp_pengumuman').value = "";
         }
 
-        // LISTEN DARI FIREBASE
+        // Fungsi Edit: Menyalin teks display kembali ke textarea
+        function salinKeInput() {
+            const teksSekarang = document.getElementById('display_pengumuman').innerText;
+            document.getElementById('inp_pengumuman').value = teksSekarang;
+            document.getElementById('inp_pengumuman').focus();
+        }
+
         db.ref('pengumuman_live').on('value', (snap) => {
             const data = snap.val();
             const pesan = data ? data.isi : "SIAGA LOGISTIK KORPASGAT\n---\nMONITORING AKTIF";
             
-            // Sidebar display (tetap normal)
             document.getElementById('display_pengumuman').innerText = pesan;
             
-            // Overlay display (menggulung ke atas)
             const runText = document.getElementById('running-text-content');
             runText.innerText = pesan; 
             
-            // Restart animasi agar mulus saat ada perubahan teks
+            // Restart animasi
             runText.style.animation = 'none';
             runText.offsetHeight; 
             runText.style.animation = null;
         });
 
-        // JAM LIVE
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
             document.getElementById('date-live').innerText = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
         }, 1000);
-
-        // DROPDOWN DATA (Sample)
-        function isiDropdown() {
-            const ids = ['inp_asal', 'inp_tujuan'];
-            ids.forEach(id => {
-                const sel = document.getElementById(id);
-                sel.innerHTML = '<option value="">-- Pilih Lokasi --</option><option value="-6.2,106.8">Lanud Halim</option><option value="-7.6,111.4">Lanud Iswahjudi</option>';
-            });
-        }
-        isiDropdown();
     </script>
 </body>
 </html>
