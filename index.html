@@ -31,11 +31,11 @@
         .callsign-text { color: var(--accent); font-weight: bold; font-size: 14px; }
 
         #map { flex: 1; background: #000; }
-        .plane-wrapper { text-align: center; }
+        .plane-wrapper { text-align: center; position: relative; }
         .plane-label { 
             background: rgba(0,0,0,0.85); color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 11px; 
             border: 1px solid var(--accent); white-space: nowrap; font-weight: bold;
-            display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            display: inline-block; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
         }
     </style>
 </head>
@@ -49,8 +49,8 @@
     
     <div class="form-container">
         <div style="display:flex; gap:8px;">
-            <div class="field" style="flex:2;"><label>Callsign</label><input type="text" id="pesawat" placeholder="cn 123"></div>
-            <div class="field" style="flex:1;"><label>POB</label><input type="number" id="pob_qty" value="1"></div>
+            <div class="field" style="flex:2;"><label>Callsign</label><input type="text" id="pesawat" placeholder="c 130"></div>
+            <div class="field" style="flex:1;"><label>POB</label><input type="number" id="pob_qty" value="3"></div>
         </div>
         <div class="field"><label>Waktu Take Off (LMT)</label><input type="datetime-local" id="takeoff_manual"></div>
         <div class="field"><label>Misi / Muatan</label><input type="text" id="misi" placeholder="Senjata / Amunisi"></div>
@@ -81,6 +81,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    // Sinkronisasi Firebase
     const firebaseConfig = { databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -97,14 +98,6 @@
 
     let missionObjects = {};
 
-    function calculateHeading(lat1, lon1, lat2, lon2) {
-        const dy = lat2 - lat1;
-        const dx = lon2 - lon1;
-        let theta = Math.atan2(dy, dx); 
-        let angle = 90 - (theta * 180 / Math.PI); // Koreksi ke arah kompas
-        return angle;
-    }
-
     db.ref('missions').on('value', snap => {
         const data = snap.val();
         const list = document.getElementById('flight-list');
@@ -118,36 +111,28 @@
                 const v = data[id];
                 const takeoffTs = new Date(v.takeoff_manual).getTime();
                 const duration = v.eet_min * 60000;
-                const isLanded = Date.now() > takeoffTs + duration;
-
-                list.innerHTML += `
-                    <div class="flight-card" style="border-left-color:${v.warna}">
-                        <div class="callsign-text">${v.pesawat}</div>
-                        <div style="color:#8b949e; font-size:11px;">ETA: ${v.eta}</div>
-                    </div>
-                `;
+                
+                list.innerHTML += `<div class="flight-card" style="border-left-color:${v.warna}"><div class="callsign-text">${v.pesawat}</div><div style="color:#8b949e; font-size:11px;">ETA: ${v.eta}</div></div>`;
 
                 const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,10', opacity: 0.6}).addTo(map);
                 
-                // KALKULASI ROTASI AWAL
-                const heading = calculateHeading(v.lat, v.lng, v.dLat, v.dLng);
+                // LOGIKA HEADING: Menghitung sudut tujuan
+                const angle = Math.atan2(v.dLat - v.lat, v.dLng - v.lng) * (180 / Math.PI);
+                const heading = 90 - angle; // Offset 90 derajat karena ikon menghadap Atas (0 deg)
 
                 const marker = L.marker([v.lat, v.lng], {
                     icon: L.divIcon({
                         className: 'plane-wrapper',
                         html: `<div>
-                                <div class="plane-label">${v.pesawat}</div><br>
-                                <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:22px; transform: rotate(${-heading}deg); transition: transform 0.3s;"></i>
+                                <div class="plane-label">${v.pesawat}</div>
+                                <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:22px; transform: rotate(${-heading}deg);"></i>
                                </div>`
                     })
                 }).addTo(map);
 
                 const timer = setInterval(() => {
                     const progress = Math.min(Math.max((Date.now() - takeoffTs) / duration, 0), 1);
-                    const curLat = v.lat + (v.dLat - v.lat) * progress;
-                    const curLng = v.lng + (v.dLng - v.lng) * progress;
-                    marker.setLatLng([curLat, curLng]);
-                    
+                    marker.setLatLng([v.lat + (v.dLat-v.lat)*progress, v.lng + (v.dLng-v.lng)*progress]);
                     if(progress >= 1) clearInterval(timer);
                 }, 1000);
 
@@ -160,13 +145,14 @@
         const a = document.getElementById('asal').value.split('|');
         const t = document.getElementById('tujuan').value.split('|');
         const toManual = document.getElementById('takeoff_manual').value;
-        if(!a[0] || !t[0] || !toManual) return alert("Data belum lengkap!");
+        if(!a[0] || !t[0]) return;
 
+        // Hitung Jarak & Durasi
         const dist = 6371 * 2 * Math.atan2(Math.sqrt(Math.sin(((t[0]-a[0])*Math.PI/180)/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(t[0]*Math.PI/180)*Math.sin(((t[1]-a[1])*Math.PI/180)/2)**2), Math.sqrt(1-(Math.sin(((t[0]-a[0])*Math.PI/180)/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(t[0]*Math.PI/180)*Math.sin(((t[1]-a[1])*Math.PI/180)/2)**2)));
         const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
 
         db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value.toUpperCase() || "A-000",
+            pesawat: document.getElementById('pesawat').value.toUpperCase(),
             takeoff_manual: toManual,
             warna: document.getElementById('warna').value,
             lat: parseFloat(a[0]), lng: parseFloat(a[1]),
