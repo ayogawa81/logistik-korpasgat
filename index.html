@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KORPASGAT TACTICAL RADAR V3 - FINAL</title>
+    <title>KORPASGAT TACTICAL RADAR V3.1</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -14,31 +14,34 @@
         :root { --accent: #ff851b; --bg-dark: #0d1117; --panel: #161b22; }
         body { margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        /* Sidebar Styling */
         #sidebar { width: 380px; background: var(--panel); border-right: 1px solid #30363d; z-index: 2000; display: flex; flex-direction: column; }
         .header { background: #010409; padding: 15px; text-align: center; border-bottom: 2px solid var(--accent); }
         #clock { font-size: 1.6rem; color: #00ff00; font-family: 'Courier New', monospace; font-weight: bold; }
         
-        .form-container { padding: 15px; background: #0d1117; border-bottom: 1px solid #30363d; }
+        .form-container { padding: 15px; background: #0d1117; border-bottom: 1px solid #30363d; overflow-y: auto; }
         .field { margin-bottom: 10px; }
         label { display: block; font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; background: #161b22; border: 1px solid #30363d; color: #fff; border-radius: 4px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 8px; background: #161b22; border: 1px solid #30363d; color: #fff; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
         
         .btn-deploy { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; margin-top: 10px; }
-        .btn-deploy:hover { filter: brightness(1.2); }
 
         #flight-list { flex: 1; overflow-y: auto; padding: 10px; background: #010409; }
         .flight-card { background: #161b22; border-radius: 4px; padding: 10px; margin-bottom: 10px; border-left: 4px solid var(--accent); border: 1px solid #30363d; font-size: 12px; }
 
-        /* Map & Marker Styling */
         #map { flex: 1; background: #000; }
-        .plane-wrapper { text-align: center; }
+        
+        /* FIX VISUAL MARKER */
+        .plane-container { position: relative; width: 30px; height: 30px; }
         .plane-label { 
-            background: rgba(0,0,0,0.85); color: #fff; padding: 2px 6px; border-radius: 3px; font-size: 10px; 
-            border: 1px solid var(--accent); white-space: nowrap; font-weight: bold;
-            display: inline-block; transform: translateY(-5px);
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.85); color: #fff; padding: 2px 6px; border-radius: 3px; 
+            font-size: 10px; border: 1px solid var(--accent); white-space: nowrap; font-weight: bold;
+            z-index: 10;
         }
-        .fa-plane { text-shadow: 0 0 10px rgba(0,0,0,0.8); }
+        .plane-icon { 
+            display: inline-block; transition: transform 0.5s ease-in-out;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
+        }
     </style>
 </head>
 <body>
@@ -55,16 +58,16 @@
             <div class="field" style="flex:1;"><label>POB</label><input type="number" id="pob" value="1"></div>
         </div>
         <div class="field"><label>Misi</label><input type="text" id="misi" placeholder="Logistik"></div>
-        <div class="field"><label>Waktu Take Off</label><input type="datetime-local" id="takeoff"></div>
+        <div class="field"><label>Waktu Take Off (LMT)</label><input type="datetime-local" id="takeoff"></div>
         
         <div style="display:flex; gap:8px;">
-            <div class="field" style="flex:1;"><label>Tipe Pesawat</label>
+            <div class="field" style="flex:1;"><label>Tipe</label>
                 <select id="tipe">
                     <option value="450">CN-235 (450km/h)</option>
                     <option value="540">C-130 (540km/h)</option>
                 </select>
             </div>
-            <div class="field" style="flex:1;"><label>Warna Radar</label><input type="color" id="warna" value="#ff851b"></div>
+            <div class="field" style="flex:1;"><label>Warna</label><input type="color" id="warna" value="#ff851b"></div>
         </div>
 
         <div style="display:flex; gap:5px;">
@@ -80,7 +83,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Konfigurasi Database - Monitor Terpusat
     const firebaseConfig = { databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -97,12 +99,20 @@
 
     let missions = {};
 
+    function getBearing(lat1, lng1, lat2, lng2) {
+        const dy = lat2 - lat1;
+        const dx = lng2 - lng1;
+        // Penyesuaian sudut: FontAwesome plane menghadap 0 derajat (Atas)
+        // atan2 memberikan sudut dalam radian, lalu kita ubah ke derajat
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        return 90 - angle; 
+    }
+
     db.ref('missions').on('value', snap => {
         const data = snap.val();
         const list = document.getElementById('flight-list');
         list.innerHTML = "";
         
-        // Bersihkan objek lama
         Object.values(missions).forEach(m => { map.removeLayer(m.marker); map.removeLayer(m.line); clearInterval(m.timer); });
         missions = {};
 
@@ -112,28 +122,24 @@
                 const takeoffTs = new Date(v.takeoff_manual).getTime();
                 const duration = v.eet_min * 60000;
 
-                list.innerHTML += `
-                    <div class="flight-card" style="border-left-color:${v.warna}">
-                        <b style="color:${v.warna}">${v.pesawat}</b><br>
-                        <small>ETA: ${v.eta}</small>
-                    </div>`;
+                list.innerHTML += `<div class="flight-card" style="border-left-color:${v.warna}"><b>${v.pesawat}</b><br><small>ETA: ${v.eta}</small></div>`;
 
                 const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,10', opacity: 0.5}).addTo(map);
                 
-                // --- LOGIKA ROTASI OTOMATIS (FIX) ---
-                // Menghitung Bearing (Arah) dari koordinat asal ke tujuan
-                const dy = v.dLat - v.lat;
-                const dx = v.dLng - v.lng;
-                const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-                const rotation = 90 - angle; // Disesuaikan agar ikon menghadap jalur
+                // HITUNG ROTASI BERDASARKAN RUTE
+                const rotation = getBearing(v.lat, v.lng, v.dLat, v.dLng);
 
                 const marker = L.marker([v.lat, v.lng], {
                     icon: L.divIcon({
-                        className: 'plane-wrapper',
-                        html: `<div>
-                                <div class="plane-label">${v.pesawat}</div><br>
-                                <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:22px; transform: rotate(${-rotation}deg);"></i>
-                               </div>`
+                        className: 'custom-div-icon',
+                        html: `<div class="plane-container">
+                                <div class="plane-label">${v.pesawat}</div>
+                                <div class="plane-icon" style="transform: rotate(${-rotation}deg);">
+                                    <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:24px;"></i>
+                                </div>
+                               </div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
                     })
                 }).addTo(map);
 
@@ -151,13 +157,13 @@
     function prosesMisi() {
         const a = document.getElementById('asal').value.split('|');
         const t = document.getElementById('tujuan').value.split('|');
-        if(!a[0] || !t[0]) return alert("Pilih Lanud!");
+        if(!a[0] || !t[0]) return;
 
-        const dist = 6371 * 2 * Math.atan2(Math.sqrt(Math.sin(((t[0]-a[0])*Math.PI/180)/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(t[0]*Math.PI/180)*Math.sin(((t[1]-a[1])*Math.PI/180)/2)**2), 1);
+        const dist = 6371 * Math.acos(Math.sin(a[0]*Math.PI/180)*Math.sin(t[0]*Math.PI/180) + Math.cos(a[0]*Math.PI/180)*Math.cos(t[0]*Math.PI/180)*Math.cos((t[1]-a[1])*Math.PI/180));
         const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
 
         db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value.toUpperCase() || "A-000",
+            pesawat: document.getElementById('pesawat').value.toUpperCase() || "A-1341",
             takeoff_manual: document.getElementById('takeoff').value,
             warna: document.getElementById('warna').value,
             lat: parseFloat(a[0]), lng: parseFloat(a[1]),
