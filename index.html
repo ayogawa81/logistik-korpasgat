@@ -2,78 +2,55 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KORPASGAT TACTICAL RADAR V3.2</title>
-    
+    <title>KORPASGAT TACTICAL RADAR V4.0 - FINAL FIX</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
     <style>
-        :root { --accent: #ff851b; --bg-dark: #0d1117; --panel: #161b22; }
-        body { margin: 0; padding: 0; display: flex; height: 100vh; background: var(--bg-dark); color: #fff; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-        
-        #sidebar { width: 380px; background: var(--panel); border-right: 1px solid #30363d; z-index: 2000; display: flex; flex-direction: column; }
+        :root { --accent: #ff851b; --bg: #0d1117; }
+        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: var(--bg); color: white; overflow: hidden; }
+        #sidebar { width: 380px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 1000; }
         .header { background: #010409; padding: 15px; text-align: center; border-bottom: 2px solid var(--accent); }
-        #clock { font-size: 1.6rem; color: #00ff00; font-family: 'Courier New', monospace; font-weight: bold; }
-        
-        .form-container { padding: 15px; background: #0d1117; border-bottom: 1px solid #30363d; overflow-y: auto; }
-        .field { margin-bottom: 10px; }
-        label { display: block; font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; background: #161b22; border: 1px solid #30363d; color: #fff; border-radius: 4px; box-sizing: border-box; }
-        
-        .btn-deploy { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; margin-top: 10px; }
-
-        #flight-list { flex: 1; overflow-y: auto; padding: 10px; background: #010409; }
-        .flight-card { background: #161b22; border-radius: 4px; padding: 10px; margin-bottom: 10px; border-left: 4px solid var(--accent); border: 1px solid #30363d; font-size: 12px; }
-
+        #clock { font-size: 1.5rem; color: #00ff00; font-family: monospace; }
+        .form { padding: 15px; border-bottom: 1px solid #30363d; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 4px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px; }
         #map { flex: 1; background: #000; }
         
-        /* LOGIKA ROTASI MARKER */
-        .plane-box { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
+        /* CSS KHUSUS ROTASI */
+        .plane-wrapper { position: relative; }
         .plane-label { 
-            position: absolute; top: -15px; background: rgba(0,0,0,0.85); color: #fff; 
-            padding: 2px 6px; border-radius: 3px; font-size: 10px; border: 1px solid var(--accent); 
-            white-space: nowrap; font-weight: bold; pointer-events: none;
+            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); padding: 2px 5px; border-radius: 3px;
+            font-size: 10px; border: 1px solid var(--accent); white-space: nowrap;
         }
-        .plane-icon-rotate { transition: transform 0.3s ease; display: inline-block; }
+        .rotated-plane { display: inline-block; transition: none; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <div class="header">
-        <div style="font-size: 0.7rem; color: var(--accent);">KORPASGAT TACTICAL RADAR</div>
+        <div style="font-size: 10px; color: var(--accent);">KORPASGAT TACTICAL RADAR</div>
         <div id="clock">00:00:00</div>
     </div>
-    
-    <div class="form-container">
-        <div style="display:flex; gap:8px;">
-            <div class="field" style="flex:2;"><label>Callsign</label><input type="text" id="pesawat" placeholder="C-130"></div>
-            <div class="field" style="flex:1;"><label>POB</label><input type="number" id="pob" value="1"></div>
-        </div>
-        <div class="field"><label>Waktu Take Off (LMT)</label><input type="datetime-local" id="takeoff"></div>
-        
-        <div style="display:flex; gap:8px;">
-            <div class="field" style="flex:1;"><label>Tipe</label>
-                <select id="tipe">
-                    <option value="450">CN-235 (450km/h)</option>
-                    <option value="540">C-130 (540km/h)</option>
-                </select>
-            </div>
-            <div class="field" style="flex:1;"><label>Warna</label><input type="color" id="warna" value="#ff851b"></div>
-        </div>
-
+    <div class="form">
+        <label style="font-size:10px;">CALLSIGN</label>
+        <input type="text" id="pesawat" value="C-130">
         <div style="display:flex; gap:5px;">
-            <select id="asal" style="flex:1;"></select>
-            <select id="tujuan" style="flex:1;"></select>
+            <select id="asal"></select>
+            <select id="tujuan"></select>
         </div>
-        <button class="btn-deploy" onclick="prosesMisi()">🚀 Deploy Mission</button>
+        <input type="datetime-local" id="takeoff">
+        <div style="display:flex; gap:5px;">
+            <select id="tipe" style="flex:2;"><option value="500">HERCULES (500 km/h)</option></select>
+            <input type="color" id="warna" value="#ff851b" style="flex:1;">
+        </div>
+        <button class="btn" onclick="kirimMisi()">🚀 DEPLOY MISSION</button>
     </div>
-    <div id="flight-list"></div>
+    <div id="flight-list" style="flex:1; overflow-y:auto; padding:10px; background:#010409;"></div>
 </div>
-
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -85,100 +62,101 @@
     const map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5);
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-    const lanud = [
+    const lanuds = [
         { name: "HLP (Jakarta)", lat: -6.265, lng: 106.890 },
         { name: "HND (Makassar)", lat: -5.061, lng: 119.553 },
         { name: "DMB (Balikpapan)", lat: -1.268, lng: 116.894 },
         { name: "MUN (Biak)", lat: -1.191, lng: 136.108 }
     ];
 
-    let missions = {};
-
-    function calculateRotation(lat1, lng1, lat2, lng2) {
-        // Menghitung sudut antara dua titik koordinat
-        const x = Math.cos(lat2 * Math.PI/180) * Math.sin((lng2 - lng1) * Math.PI/180);
-        const y = Math.cos(lat1 * Math.PI/180) * Math.sin(lat2 * Math.PI/180) -
-                  Math.sin(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.cos((lng2 - lng1) * Math.PI/180);
-        
-        let bearing = Math.atan2(x, y) * (180 / Math.PI);
-        return (bearing + 360) % 360; // Mengembalikan sudut 0-360 derajat
-    }
+    let liveMissions = {};
 
     db.ref('missions').on('value', snap => {
         const data = snap.val();
-        const list = document.getElementById('flight-list');
-        list.innerHTML = "";
+        const listDiv = document.getElementById('flight-list');
+        listDiv.innerHTML = "";
         
-        Object.values(missions).forEach(m => { map.removeLayer(m.marker); map.removeLayer(m.line); clearInterval(m.timer); });
-        missions = {};
+        // Clear existing
+        Object.values(liveMissions).forEach(m => { map.removeLayer(m.marker); map.removeLayer(m.line); clearInterval(m.timer); });
+        liveMissions = {};
 
-        if(data) {
+        if (data) {
             Object.keys(data).forEach(id => {
                 const v = data[id];
-                const takeoffTs = new Date(v.takeoff_manual).getTime();
-                const duration = v.eet_min * 60000;
+                listDiv.innerHTML += `<div style="padding:8px; margin-bottom:5px; border-left:4px solid ${v.warna}; background:#161b22; font-size:12px;"><b>${v.pesawat}</b><br>ETA: ${v.eta}</div>`;
 
-                list.innerHTML += `<div class="flight-card" style="border-left-color:${v.warna}"><b>${v.pesawat}</b><br><small>ETA: ${v.eta}</small></div>`;
+                // Garis Rute
+                const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,5', opacity: 0.5}).addTo(map);
 
-                const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,10', opacity: 0.5}).addTo(map);
-                
-                // HITUNG BEARING UNTUK ROTASI
-                const rot = calculateRotation(v.lat, v.lng, v.dLat, v.dLng);
+                // LOGIKA BEARING (Kunci Arah)
+                const dy = v.dLat - v.lat;
+                const dx = v.dLng - v.lng;
+                const theta = Math.atan2(dy, dx);
+                let angle = (theta * 180 / Math.PI); 
+                // FontAwesome Plane menghadap 0 derajat (kanan/Timur) secara default di CSS
+                // Tapi kita ingin dia menghadap "Atas" (Utara) sebagai 0 derajat
+                const rotation = 90 - angle; 
 
                 const marker = L.marker([v.lat, v.lng], {
                     icon: L.divIcon({
-                        className: 'none',
-                        html: `<div class="plane-box">
-                                <div class="plane-label">${v.pesawat}</div>
-                                <div class="plane-icon-rotate" style="transform: rotate(${rot}deg);">
-                                    <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:24px;"></i>
-                                </div>
-                               </div>`,
-                        iconSize: [40, 40],
-                        iconAnchor: [20, 20]
+                        className: 'plane-wrapper',
+                        html: `<div style="transform: rotate(${-rotation}deg);" class="rotated-plane">
+                                 <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:24px;"></i>
+                               </div>
+                               <div class="plane-label">${v.pesawat}</div>`,
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
                     })
                 }).addTo(map);
 
+                const takeoffTime = new Date(v.takeoff_manual).getTime();
+                const totalDur = v.eet_min * 60000;
+
                 const timer = setInterval(() => {
-                    const progress = Math.min(Math.max((Date.now() - takeoffTs) / duration, 0), 1);
-                    marker.setLatLng([v.lat + (v.dLat-v.lat)*progress, v.lng + (v.dLng-v.lng)*progress]);
-                    if(progress >= 1) clearInterval(timer);
+                    let progress = (Date.now() - takeoffTime) / totalDur;
+                    if (progress < 0) progress = 0;
+                    if (progress >= 1) { progress = 1; clearInterval(timer); }
+                    
+                    const nowLat = v.lat + (v.dLat - v.lat) * progress;
+                    const nowLng = v.lng + (v.dLng - v.lng) * progress;
+                    marker.setLatLng([nowLat, nowLng]);
                 }, 1000);
 
-                missions[id] = { marker, line, timer };
+                liveMissions[id] = { marker, line, timer };
             });
         }
     });
 
-    function prosesMisi() {
-        const a = document.getElementById('asal').value.split('|');
-        const t = document.getElementById('tujuan').value.split('|');
-        if(!a[0] || !t[0]) return;
+    function kirimMisi() {
+        const asal = document.getElementById('asal').value.split('|');
+        const tujuan = document.getElementById('tujuan').value.split('|');
+        if(!asal[0] || !tujuan[0]) return;
 
-        const dist = 6371 * Math.acos(Math.sin(a[0]*Math.PI/180)*Math.sin(t[0]*Math.PI/180) + Math.cos(a[0]*Math.PI/180)*Math.cos(t[0]*Math.PI/180)*Math.cos((t[1]-a[1])*Math.PI/180));
+        const dLat = parseFloat(tujuan[0]), dLng = parseFloat(tujuan[1]);
+        const sLat = parseFloat(asal[0]), sLng = parseFloat(asal[1]);
+        
+        // Jarak sederhana
+        const dist = Math.sqrt(Math.pow(dLat-sLat, 2) + Math.pow(dLng-sLng, 2)) * 111;
         const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
 
         db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value.toUpperCase() || "FLIGHT",
+            pesawat: document.getElementById('pesawat').value.toUpperCase(),
             takeoff_manual: document.getElementById('takeoff').value,
             warna: document.getElementById('warna').value,
-            lat: parseFloat(a[0]), lng: parseFloat(a[1]),
-            dLat: parseFloat(t[0]), dLng: parseFloat(t[1]),
+            lat: sLat, lng: sLng, dLat: dLat, dLng: dLng,
             eet_min: eet,
             eta: new Date(new Date(document.getElementById('takeoff').value).getTime() + (eet * 60000)).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})
         });
     }
 
-    function init() {
-        ['asal', 'tujuan'].forEach(id => {
-            const sel = document.getElementById(id);
-            sel.innerHTML = '<option value="">-- PILIH LANUD --</option>';
-            lanud.forEach(p => sel.innerHTML += `<option value="${p.lat}|${p.lng}">${p.name}</option>`);
-        });
-        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', {hour12: false}); }, 1000);
-        document.getElementById('takeoff').value = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0,16);
-    }
-    init();
+    // Init
+    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', {hour12: false}); }, 1000);
+    lanuds.forEach(l => {
+        const opt = `<option value="${l.lat}|${l.lng}">${l.name}</option>`;
+        document.getElementById('asal').innerHTML += opt;
+        document.getElementById('tujuan').innerHTML += opt;
+    });
+    document.getElementById('takeoff').value = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 </script>
 </body>
 </html>
