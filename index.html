@@ -19,13 +19,13 @@
         #map-container { flex: 1; position: relative; background: #000; overflow: hidden; }
         #map { height: 100%; width: 100%; background: #011425; }
 
-        /* --- MODIFIKASI: PENGUMUMAN FULL HEIGHT (VERTICAL) --- */
+        /* --- PENGUMUMAN FULL HEIGHT (VERTICAL) --- */
         #announcement-overlay {
             position: absolute;
             top: 0;
-            right: -400px; /* Sembunyi di kanan saat awal */
+            right: -400px;
             width: 380px;
-            height: 100%; /* Lebar sampai bawah */
+            height: 100%;
             background: rgba(0, 20, 40, 0.9); 
             color: #00ff00;
             padding: 20px;
@@ -42,7 +42,7 @@
             text-align: left;
             position: relative;
             animation: scrollUp 15s linear infinite; 
-            white-space: pre-wrap; /* Multi-baris */
+            white-space: pre-wrap;
             font-size: 1.4rem;
             line-height: 1.8;
             width: 100%;
@@ -54,19 +54,16 @@
             100% { top: -120%; }
         }
 
-        /* TEMA KODAL LOGISTIK */
         .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
         .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
         #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
         #clock-live { font-size: 2.2rem; font-weight: bold; font-family: monospace; color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-top: 5px; }
 
-        /* NAVIGASI TAB */
         .tab-nav { display: flex; background: #002d5a; border-bottom: 2px solid #ff851b; }
         .tab-nav button { flex: 1; padding: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
         .btn-active { background: #ff851b !important; }
         .btn-inactive { background: #002d5a; opacity: 0.7; }
 
-        /* FORM & LIST (LOGIKA LAMA) */
         .form-section { padding: 15px; background: #002244; overflow-y: auto; border-bottom: 1px solid #113355; flex-shrink: 0; max-height: 38vh; }
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
@@ -74,22 +71,8 @@
         button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; transition: 0.3s; }
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
         
-        /* CARD MISI */
-        .flight-card { background: #002d5a; border-left: 6px solid; border-radius: 10px; padding: 15px; margin-bottom: 15px; position: relative; border: 1px solid #113355; }
-        .action-btns { position: absolute; top: 10px; right: 10px; display: flex; gap: 12px; }
-        .btn-edit { background: none; border: none; color: #ffc107; cursor: pointer; }
-        .btn-cancel { background: none; border: none; color: #ff4d4d; cursor: pointer; }
-        .card-main-body { display: flex; gap: 15px; align-items: center; margin-top: 10px; }
-        .card-main-body img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 3px solid; }
-        .nav-time-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; background: rgba(0,0,0,0.5); margin-top: 10px; border-radius: 5px; padding: 8px; }
-        .time-val { font-family: monospace; font-size: 0.9rem; color: #00ff00; font-weight: bold; }
-        .transit-alert { background: #ff851b; color: black; padding: 8px; text-align: center; font-weight: bold; margin-top: 10px; border-radius: 4px; animation: blink 1.5s infinite; }
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.6;} 100% {opacity: 1;} }
-
-        /* MAP MARKER */
-        .pilot-photo-map { width: 65px; height: 65px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; box-shadow: 0 0 10px #000; }
-        .serial-txt-map { color: #0f0; font-family: monospace; font-weight: bold; font-size: 1.2rem; text-shadow: 2px 2px 4px #000; }
-
+        .flight-card { background: #002d5a; border-left: 6px solid #ff851b; border-radius: 10px; padding: 15px; margin-bottom: 15px; position: relative; border: 1px solid #113355; }
+        .btn-cancel { position: absolute; top: 10px; right: 10px; color: #ff4d4d; background: none; border: none; cursor: pointer; }
         .btn-edit-tool { background: #007bff; color: white; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-top: 10px; font-weight: bold; }
     </style>
 </head>
@@ -107,14 +90,13 @@
             <button onclick="bukaSlide(2)" id="btn-s2" class="btn-inactive"><i class="fa-solid fa-bullhorn"></i> PENGUMUMAN</button>
         </div>
 
-        <!-- SLIDE 1: TRACKING (DATA LAMA TETAP ADA) -->
+        <!-- SLIDE 1: TRACKING -->
         <div id="slide-1" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <div class="form-section">
                 <input type="hidden" id="edit_fbId" value="">
                 <div class="input-group"><label>Misi / Logistik</label><input type="text" id="inp_barang" placeholder="Amunisi"></div>
                 <div class="input-group"><label>Personel On Board</label><input type="text" id="inp_kurir" placeholder="Nama Lengkap"></div>
                 <div class="input-group"><label>Jenis & No Seri</label><input type="text" id="inp_pesawat" placeholder="Hercules / A-1301"></div>
-                <div class="input-group"><label>Insert Foto</label><input type="file" id="inp_foto" accept="image/*"></div>
                 <div class="input-group"><label>Jadwal Take Off Awal (WIB)</label><input type="datetime-local" id="inp_waktu"></div>
                 <div class="input-group"><label>1. Asal</label><select id="inp_asal"></select></div>
                 <div class="input-group"><label>2. Transit 1</label><select id="inp_transit1"></select></div>
@@ -134,19 +116,18 @@
                 <button class="btn-tambah" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> KIRIM PENGUMUMAN</button>
             </div>
             <div style="background: #002d5a; padding: 20px; border-radius: 8px; border-left: 5px solid #00ff00;">
-                <h3 style="margin-top: 0; color: #00ff00; font-size: 1rem;"><i class="fa-solid fa-tower-broadcast"></i> STATUS SAAT INI:</h3>
-                <div id="display_pengumuman" style="font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-wrap; font-weight: bold;">Memuat data...</div>
+                <h3 style="margin-top: 0; color: #00ff00; font-size: 1rem;">STATUS SAAT INI:</h3>
+                <div id="display_pengumuman" style="font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-wrap; font-weight: bold;">Memuat...</div>
                 <button class="btn-edit-tool" onclick="salinKeInput()"><i class="fa-solid fa-pen-to-square"></i> Edit Teks Terakhir</button>
             </div>
         </div>
     </div>
 
     <div id="map-container">
-        <!-- OVERLAY VERTIKAL KANAN -->
         <div id="announcement-overlay">
             <h4 style="border-bottom: 1px solid #ff851b; padding-bottom: 5px; color: #ff851b;"><i class="fa-solid fa-bolt"></i> FLASH INFO</h4>
             <div id="scroll-container" style="position: relative; flex: 1; overflow: hidden;">
-                <div id="running-text-content" class="scroll-up-text">Menunggu instruksi komando...</div>
+                <div id="running-text-content" class="scroll-up-text">Menunggu instruksi...</div>
             </div>
         </div>
         <div id="map"></div>
@@ -166,15 +147,56 @@
         const map = L.map('map').setView([-2.2, 118], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        let flights = [];
-        const SPEED_HERCULES = 540;
-
         const daftarBandara = [
             { nama: "Jakarta (HLP) - Lanud Halim", lat: -6.2655, lng: 106.8906 },
             { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
             { nama: "Makassar (UPG) - Lanud Hasanuddin", lat: -5.0616, lng: 119.5539 },
             { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 }
         ];
+
+        // FUNGSI AKTIVASI (CRITICAL)
+        function prosesTambahPenerbangan() {
+            const barang = document.getElementById('inp_barang').value;
+            const kurir = document.getElementById('inp_kurir').value;
+            const pesawat = document.getElementById('inp_pesawat').value;
+            const waktu = document.getElementById('inp_waktu').value;
+            const asal = document.getElementById('inp_asal').value;
+            const tujuan = document.getElementById('inp_tujuan').value;
+
+            if(!barang || !kurir || !asal || !tujuan) return alert("Mohon lengkapi Misi, Personel, Asal, dan Tujuan!");
+
+            db.ref('misi_logistik').push({
+                barang, kurir, pesawat, waktu, asal, tujuan,
+                created_at: Date.now()
+            }).then(() => {
+                alert("Misi Berhasil Diaktivasi ke Cloud!");
+                document.querySelectorAll('.form-section input').forEach(i => i.value = "");
+            });
+        }
+
+        // TAMPILKAN LIST MISI DARI CLOUD
+        db.ref('misi_logistik').on('value', (snap) => {
+            const list = document.getElementById('flight-list');
+            list.innerHTML = "";
+            const data = snap.val();
+            if(data) {
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    list.innerHTML += `
+                        <div class="flight-card">
+                            <button class="btn-cancel" onclick="hapusMisi('${key}')"><i class="fa-solid fa-trash"></i></button>
+                            <strong>📦 MISI: ${item.barang}</strong><br>
+                            <small>👤 ${item.kurir} | ✈️ ${item.pesawat}</small><br>
+                            <small>📍 ${item.asal.split(',')[2]} ➔ ${item.tujuan.split(',')[2]}</small>
+                        </div>
+                    `;
+                });
+            }
+        });
+
+        function hapusMisi(key) {
+            if(confirm("Hapus misi ini?")) db.ref('misi_logistik/' + key).remove();
+        }
 
         function bukaSlide(n) {
             const overlay = document.getElementById('announcement-overlay');
@@ -201,8 +223,7 @@
         }
 
         function salinKeInput() {
-            const teksSekarang = document.getElementById('display_pengumuman').innerText;
-            document.getElementById('inp_pengumuman').value = teksSekarang;
+            document.getElementById('inp_pengumuman').value = document.getElementById('display_pengumuman').innerText;
             document.getElementById('inp_pengumuman').focus();
         }
 
@@ -215,21 +236,6 @@
             runText.style.animation = 'none';
             runText.offsetHeight; 
             runText.style.animation = null;
-        });
-
-        // LOGIKA TRACKING LAMA (TETAP DIJAGA)
-        db.ref('misi_logistik').on('value', (snapshot) => {
-            flights.forEach(f => { if(f.marker) map.removeLayer(f.marker); if(f.line) map.removeLayer(f.line); });
-            flights = [];
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).forEach(id => {
-                    const f = data[id]; f.fbId = id; 
-                    if(typeof initFlightMarker === "function") initFlightMarker(f); 
-                    flights.push(f);
-                });
-            }
-            if(typeof renderSidebar === "function") renderSidebar();
         });
 
         setInterval(() => {
@@ -249,9 +255,6 @@
             });
         }
         isiDropdown();
-
-        // Catatan: Pastikan fungsi initFlightMarker, prosesTambahPenerbangan, 
-        // dan renderSidebar milik Anda tetap ada di bawah sini.
     </script>
 </body>
 </html>
