@@ -19,14 +19,13 @@
         #map-container { flex: 1; position: relative; background: #000; overflow: hidden; }
         #map { height: 100%; width: 100%; background: #011425; }
 
-        /* --- MODIFIKASI: OVERLAY FULL LAYAR PETA --- */
         #announcement-overlay {
             position: absolute;
-            top: -100%; /* Sembunyi di atas layar */
+            top: -100%; 
             left: 0;
             right: 0;
-            height: 100%; /* Menutupi seluruh tinggi peta */
-            background: rgba(0, 15, 30, 0.95); /* Latar gelap pekat */
+            height: 100%; 
+            background: rgba(0, 15, 30, 0.95); 
             color: #00ff00;
             padding: 50px 20px;
             z-index: 2000;
@@ -36,17 +35,16 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            pointer-events: none; /* Agar tetap bisa klik peta di bawahnya jika perlu, atau set 'auto' */
+            pointer-events: none; 
         }
 
-        /* Animasi Menggulung Vertikal */
         .scroll-up-text {
             display: block;
             text-align: center;
             position: relative;
             animation: scrollUpFull 18s linear infinite; 
             white-space: pre-wrap;
-            font-size: 2.8rem; /* Ukuran besar untuk instruksi komando */
+            font-size: 2.8rem; 
             line-height: 1.6;
             width: 80%;
             font-weight: bold;
@@ -54,11 +52,10 @@
         }
 
         @keyframes scrollUpFull {
-            0% { transform: translateY(100vh); } /* Mulai dari bawah monitor */
-            100% { transform: translateY(-120%); } /* Berakhir di atas monitor */
+            0% { transform: translateY(100vh); } 
+            100% { transform: translateY(-120%); } 
         }
 
-        /* STYLE SIDEBAR & FORM (TETAP SESUAI STANDAR KODAL) */
         .header { background: #002d5a; padding: 20px; text-align: center; border-bottom: 3px solid #ff851b; }
         .header h2 { margin: 0; font-size: 1.3rem; color: #ff851b; text-transform: uppercase; letter-spacing: 2px; }
         #date-live { font-size: 1.1rem; color: #fff; font-weight: bold; margin-top: 5px; }
@@ -73,7 +70,13 @@
         .input-group { margin-bottom: 10px; display: flex; flex-direction: column; }
         .input-group label { font-size: 0.85rem; margin-bottom: 4px; color: #8cb4d6; font-weight: bold; }
         input, select, textarea { padding: 10px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ff851b; background: #001224; color: white; font-weight: bold; }
+        
         button.btn-tambah { background: #ff851b; color: white; border: none; padding: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 1.1rem; margin-top: 5px; transition: 0.3s; }
+        
+        /* Style Tambahan untuk Tombol Edit */
+        button.btn-edit { background: #555; color: white; border: 1px solid #777; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 6px; width: 100%; font-size: 0.9rem; margin-top: 8px; transition: 0.3s; }
+        button.btn-edit:hover { background: #666; }
+
         .list-section { flex: 1; overflow-y: auto; padding: 15px; background: #001f3f; }
     </style>
 </head>
@@ -106,8 +109,14 @@
             <div style="background: #002244; padding: 15px; border-radius: 8px; border: 1px solid #ff851b; margin-bottom: 20px;">
                 <label style="color: #ff851b; font-weight: bold; display: block; margin-bottom: 10px;">BROADCAST INSTRUKSI (Full Layar Peta)</label>
                 <textarea id="inp_pengumuman" style="width: 100%; height: 120px; font-family: sans-serif; resize: none;" placeholder="Tulis pesan komando di sini..."></textarea>
+                
+                <!-- Tombol Kirim Tetap Ada -->
                 <button class="btn-tambah" onclick="updatePengumuman()"><i class="fa-solid fa-paper-plane"></i> KIRIM KE SELURUH MONITOR</button>
+                
+                <!-- TOMBOL EDIT BARU DIGABUNGKAN DISINI -->
+                <button class="btn-edit" onclick="tarikUntukEdit()"><i class="fa-solid fa-pen-to-square"></i> EDIT INSTRUKSI AKTIF</button>
             </div>
+            
             <div style="flex: 1; background: #002d5a; padding: 20px; border-radius: 8px; border-left: 5px solid #00ff00;">
                 <h3 style="margin-top: 0; color: #00ff00; font-size: 1rem;"><i class="fa-solid fa-tower-broadcast"></i> MONITOR AKTIF:</h3>
                 <div id="display_pengumuman" style="font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-wrap; font-weight: bold;">Menunggu Data...</div>
@@ -116,7 +125,6 @@
     </div>
 
     <div id="map-container">
-        <!-- OVERLAY MENGGULUNG FULL BAWAH KE ATAS -->
         <div id="announcement-overlay">
             <div id="running-text-content" class="scroll-up-text">SIAGA LOGISTIK KORPASGAT</div>
         </div>
@@ -138,7 +146,6 @@
         const map = L.map('map').setView([-2.2, 118], 5);
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
 
-        // FUNGSI GANTI TAB & KONTROL OVERLAY
         function bukaSlide(n) {
             const overlay = document.getElementById('announcement-overlay');
             if(n === 1) {
@@ -146,17 +153,16 @@
                 document.getElementById('slide-2').style.display = "none";
                 document.getElementById('btn-s1').className = "btn-active";
                 document.getElementById('btn-s2').className = "btn-inactive";
-                overlay.style.top = "-100%"; // Sembunyikan ke atas
+                overlay.style.top = "-100%"; 
             } else {
                 document.getElementById('slide-1').style.display = "none";
                 document.getElementById('slide-2').style.display = "flex";
                 document.getElementById('btn-s1').className = "btn-inactive";
                 document.getElementById('btn-s2').className = "btn-active";
-                overlay.style.top = "0"; // Turun menutupi peta
+                overlay.style.top = "0"; 
             }
         }
 
-        // KIRIM DATA KE CLOUD
         function updatePengumuman() {
             const teks = document.getElementById('inp_pengumuman').value;
             if(!teks) return alert("Masukkan Instruksi!");
@@ -167,7 +173,16 @@
             document.getElementById('inp_pengumuman').value = "";
         }
 
-        // SYNC DATA REALTIME
+        // FUNGSI BARU: TARIK TEKS DARI MONITOR KE INPUT
+        function tarikUntukEdit() {
+            const teksAktif = document.getElementById('display_pengumuman').innerText;
+            if(teksAktif === "Menunggu Data..." || teksAktif === "") {
+                return alert("Tidak ada pesan aktif untuk diedit!");
+            }
+            document.getElementById('inp_pengumuman').value = teksAktif;
+            document.getElementById('inp_pengumuman').focus();
+        }
+
         db.ref('pengumuman_live').on('value', (snap) => {
             const data = snap.val();
             const pesan = data ? data.isi : "KOMANDO PASUKAN GERAK CEPAT\nLOGISTIK SIAGA";
@@ -177,13 +192,11 @@
             const runText = document.getElementById('running-text-content');
             runText.innerText = pesan; 
             
-            // Restart animasi agar mulai dari bawah layar setiap ada update
             runText.style.animation = 'none';
             runText.offsetHeight; 
             runText.style.animation = null;
         });
 
-        // JAM DIGITAL
         setInterval(() => {
             const now = new Date();
             document.getElementById('clock-live').innerText = now.toLocaleTimeString('id-ID');
