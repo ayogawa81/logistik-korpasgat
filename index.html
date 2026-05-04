@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KORPASGAT TACTICAL RADAR V3.1</title>
+    <title>KORPASGAT TACTICAL RADAR V3.2</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
@@ -21,7 +21,7 @@
         .form-container { padding: 15px; background: #0d1117; border-bottom: 1px solid #30363d; overflow-y: auto; }
         .field { margin-bottom: 10px; }
         label { display: block; font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; background: #161b22; border: 1px solid #30363d; color: #fff; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
+        input, select { width: 100%; padding: 8px; background: #161b22; border: 1px solid #30363d; color: #fff; border-radius: 4px; box-sizing: border-box; }
         
         .btn-deploy { width: 100%; padding: 12px; background: var(--accent); color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; text-transform: uppercase; margin-top: 10px; }
 
@@ -30,18 +30,14 @@
 
         #map { flex: 1; background: #000; }
         
-        /* FIX VISUAL MARKER */
-        .plane-container { position: relative; width: 30px; height: 30px; }
+        /* LOGIKA ROTASI MARKER */
+        .plane-box { position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
         .plane-label { 
-            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.85); color: #fff; padding: 2px 6px; border-radius: 3px; 
-            font-size: 10px; border: 1px solid var(--accent); white-space: nowrap; font-weight: bold;
-            z-index: 10;
+            position: absolute; top: -15px; background: rgba(0,0,0,0.85); color: #fff; 
+            padding: 2px 6px; border-radius: 3px; font-size: 10px; border: 1px solid var(--accent); 
+            white-space: nowrap; font-weight: bold; pointer-events: none;
         }
-        .plane-icon { 
-            display: inline-block; transition: transform 0.5s ease-in-out;
-            text-shadow: 0 0 10px rgba(0,0,0,0.9);
-        }
+        .plane-icon-rotate { transition: transform 0.3s ease; display: inline-block; }
     </style>
 </head>
 <body>
@@ -57,7 +53,6 @@
             <div class="field" style="flex:2;"><label>Callsign</label><input type="text" id="pesawat" placeholder="C-130"></div>
             <div class="field" style="flex:1;"><label>POB</label><input type="number" id="pob" value="1"></div>
         </div>
-        <div class="field"><label>Misi</label><input type="text" id="misi" placeholder="Logistik"></div>
         <div class="field"><label>Waktu Take Off (LMT)</label><input type="datetime-local" id="takeoff"></div>
         
         <div style="display:flex; gap:8px;">
@@ -99,13 +94,14 @@
 
     let missions = {};
 
-    function getBearing(lat1, lng1, lat2, lng2) {
-        const dy = lat2 - lat1;
-        const dx = lng2 - lng1;
-        // Penyesuaian sudut: FontAwesome plane menghadap 0 derajat (Atas)
-        // atan2 memberikan sudut dalam radian, lalu kita ubah ke derajat
-        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
-        return 90 - angle; 
+    function calculateRotation(lat1, lng1, lat2, lng2) {
+        // Menghitung sudut antara dua titik koordinat
+        const x = Math.cos(lat2 * Math.PI/180) * Math.sin((lng2 - lng1) * Math.PI/180);
+        const y = Math.cos(lat1 * Math.PI/180) * Math.sin(lat2 * Math.PI/180) -
+                  Math.sin(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.cos((lng2 - lng1) * Math.PI/180);
+        
+        let bearing = Math.atan2(x, y) * (180 / Math.PI);
+        return (bearing + 360) % 360; // Mengembalikan sudut 0-360 derajat
     }
 
     db.ref('missions').on('value', snap => {
@@ -126,20 +122,20 @@
 
                 const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,10', opacity: 0.5}).addTo(map);
                 
-                // HITUNG ROTASI BERDASARKAN RUTE
-                const rotation = getBearing(v.lat, v.lng, v.dLat, v.dLng);
+                // HITUNG BEARING UNTUK ROTASI
+                const rot = calculateRotation(v.lat, v.lng, v.dLat, v.dLng);
 
                 const marker = L.marker([v.lat, v.lng], {
                     icon: L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div class="plane-container">
+                        className: 'none',
+                        html: `<div class="plane-box">
                                 <div class="plane-label">${v.pesawat}</div>
-                                <div class="plane-icon" style="transform: rotate(${-rotation}deg);">
+                                <div class="plane-icon-rotate" style="transform: rotate(${rot}deg);">
                                     <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:24px;"></i>
                                 </div>
                                </div>`,
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20]
                     })
                 }).addTo(map);
 
@@ -163,7 +159,7 @@
         const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
 
         db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value.toUpperCase() || "A-1341",
+            pesawat: document.getElementById('pesawat').value.toUpperCase() || "FLIGHT",
             takeoff_manual: document.getElementById('takeoff').value,
             warna: document.getElementById('warna').value,
             lat: parseFloat(a[0]), lng: parseFloat(a[1]),
