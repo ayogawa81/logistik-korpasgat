@@ -262,63 +262,99 @@
             });
         }
 
-        async function prosesTambahPenerbangan() {
-            const fbId = document.getElementById('edit_fbId').value;
-            const barang = document.getElementById('inp_barang').value;
-            const kurir = document.getElementById('inp_kurir').value || "AU";
-            const pesawat = document.getElementById('inp_pesawat').value || "A-1301";
-            const waktuVal = document.getElementById('inp_waktu').value;
-            if (!barang || !waktuVal) { alert("Mohon isi Misi dan Jadwal Take Off!"); return; }
+       async function prosesTambahPenerbangan() {
+    try {
+        const btnSubmit = document.getElementById('btn_submit');
+        const fbId = document.getElementById('edit_fbId').value;
+        const barang = document.getElementById('inp_barang').value;
+        const kurir = document.getElementById('inp_kurir').value || "AU";
+        const pesawat = document.getElementById('inp_pesawat').value || "A-1301";
+        const waktuVal = document.getElementById('inp_waktu').value;
 
-            const file = document.getElementById('inp_foto').files[0];
-            let fotoUrl = document.getElementById('edit_fbId').dataset.oldFoto || "https://ui-avatars.com/api/?name=" + kurir.replace(' ','+');
-            if (file) { fotoUrl = await new Promise(r => { const f = new FileReader(); f.onload = e => r(e.target.result); f.readAsDataURL(file); }); }
-
-            const ruteIds = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
-            const rute = [];
-            ruteIds.forEach(id => {
-                const val = document.getElementById(id).value;
-                if (val) { const d = val.split(','); rute.push({ lat: parseFloat(d[0]), lng: parseFloat(d[1]), nama: d[2], rawVal: val }); }
-            });
-
-            let oldData = fbId ? flights.find(x => x.fbId === fbId) : null;
-            const payload = {
-                barang, kurir, pesawat, fotoUrl, rute,
-                depTimeStr: new Date(waktuVal).toISOString(),
-                status: oldData ? oldData.status : "STANDBY",
-                currentStep: oldData ? oldData.currentStep : 0,
-                isWaiting: oldData ? oldData.isWaiting : true,
-                etd: oldData ? oldData.etd : "--:--", 
-                eta: oldData ? oldData.eta : "--:--", 
-                eet: oldData ? oldData.eet : "--:--",
-                lastTakeOffStr: oldData ? oldData.lastTakeOffStr : "",
-                nextEtaStr: oldData ? oldData.nextEtaStr : "",
-                warna: oldData ? oldData.warna : '#' + Math.floor(Math.random()*16777215).toString(16)
-            };
-            if (fbId) { db.ref('misi_logistik/' + fbId).update(payload).then(() => resetForm()); }
-            else { db.ref('misi_logistik').push(payload).then(() => resetForm()); }
+        // Validasi Dasar
+        if (!barang || !waktuVal) { 
+            alert("Mohon isi Misi dan Jadwal Take Off!"); 
+            return; 
         }
 
-        function triggerTakeOff(id) {
-            const f = flights.find(x => x.fbId === id);
-            const now = new Date();
-            const p1 = f.rute[f.currentStep];
-            const p2 = f.rute[f.currentStep + 1];
-            const dist = calculateDistance(p1.lat, p1.lng, p2.lat, p2.lng);
-            const hours = dist / SPEED_HERCULES;
-            const eetMinutes = Math.round(hours * 60);
-            const nextEta = new Date(now.getTime() + (hours * 3600000));
+        // Animasi Loading agar user tahu proses sedang berjalan
+        btnSubmit.disabled = true;
+        btnSubmit.innerText = "⌛ MEMPROSES...";
 
-            db.ref('misi_logistik/' + id).update({
-                isWaiting: false,
-                lastTakeOffStr: now.toISOString(),
-                nextEtaStr: nextEta.toISOString(),
-                etd: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                eta: nextEta.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-                eet: eetMinutes + "m",
-                status: "IN_FLIGHT"
-            });
+        // Penanganan Foto yang lebih aman
+        const fileInput = document.getElementById('inp_foto');
+        const file = fileInput.files[0];
+        let fotoUrl = "https://ui-avatars.com/api/?name=" + kurir.replace(' ','+');
+
+        // Jika sedang edit, ambil foto lama jika ada
+        const editElem = document.getElementById('edit_fbId');
+        if (fbId && editElem.dataset.oldFoto) {
+            fotoUrl = editElem.dataset.oldFoto;
         }
+
+        // Jika ada file baru yang diunggah
+        if (file) { 
+            fotoUrl = await new Promise((resolve, reject) => { 
+                const reader = new FileReader(); 
+                reader.onload = e => resolve(e.target.result); 
+                reader.onerror = () => reject("Gagal membaca file");
+                reader.readAsDataURL(file); 
+            }); 
+        }
+
+        // Ambil data rute
+        const ruteIds = ['inp_asal', 'inp_transit1', 'inp_transit2', 'inp_tujuan', 'inp_kembali'];
+        const rute = [];
+        ruteIds.forEach(id => {
+            const val = document.getElementById(id).value;
+            if (val) { 
+                const d = val.split(','); 
+                rute.push({ lat: parseFloat(d[0]), lng: parseFloat(d[1]), nama: d[2], rawVal: val }); 
+            }
+        });
+
+        if (rute.length < 2) {
+            alert("Minimal pilih Asal dan Tujuan!");
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "🚀 AKTIVASI MISI CLOUD";
+            return;
+        }
+
+        let oldData = fbId ? flights.find(x => x.fbId === fbId) : null;
+        
+        const payload = {
+            barang, kurir, pesawat, fotoUrl, rute,
+            depTimeStr: new Date(waktuVal).toISOString(),
+            status: oldData ? oldData.status : "STANDBY",
+            currentStep: oldData ? oldData.currentStep : 0,
+            isWaiting: oldData ? oldData.isWaiting : true,
+            etd: oldData ? oldData.etd : "--:--", 
+            eta: oldData ? oldData.eta : "--:--", 
+            eet: oldData ? oldData.eet : "--:--",
+            lastTakeOffStr: oldData ? oldData.lastTakeOffStr : "",
+            nextEtaStr: oldData ? oldData.nextEtaStr : "",
+            warna: oldData ? oldData.warna : '#' + Math.floor(Math.random()*16777215).toString(16)
+        };
+
+        if (fbId) { 
+            await db.ref('misi_logistik/' + fbId).update(payload);
+        } else { 
+            await db.ref('misi_logistik').push(payload);
+        }
+
+        alert("Misi Berhasil Disimpan!");
+        resetForm();
+        fileInput.value = ""; // Reset input file
+
+    } catch (error) {
+        console.error(error);
+        alert("Terjadi Kesalahan: " + error);
+    } finally {
+        const btnSubmit = document.getElementById('btn_submit');
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = fbId ? "💾 UPDATE MISI" : "🚀 AKTIVASI MISI CLOUD";
+    }
+}
 
         function renderSidebar() {
             const list = document.getElementById('flight-list'); list.innerHTML = "";
