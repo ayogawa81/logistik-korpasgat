@@ -1,180 +1,853 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <title>KORPASGAT TACTICAL RADAR V4.0 - FINAL FIX</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <style>
-        :root { --accent: #ff851b; --bg: #0d1117; }
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; background: var(--bg); color: white; overflow: hidden; }
-        #sidebar { width: 380px; background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; z-index: 1000; }
-        .header { background: #010409; padding: 15px; text-align: center; border-bottom: 2px solid var(--accent); }
-        #clock { font-size: 1.5rem; color: #00ff00; font-family: monospace; }
-        .form { padding: 15px; border-bottom: 1px solid #30363d; }
-        input, select { width: 100%; padding: 8px; margin: 5px 0; background: #0d1117; border: 1px solid #30363d; color: white; border-radius: 4px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; background: var(--accent); border: none; color: white; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px; }
-        #map { flex: 1; background: #000; }
-        
-        /* CSS KHUSUS ROTASI */
-        .plane-wrapper { position: relative; }
-        .plane-label { 
-            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.8); padding: 2px 5px; border-radius: 3px;
-            font-size: 10px; border: 1px solid var(--accent); white-space: nowrap;
-        }
-        .rotated-plane { display: inline-block; transition: none; }
-    </style>
+<meta charset="UTF-8">
+<!-- Viewport fit untuk TV Kiosk / Display -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Display Jadwal Kegiatan Online Synchronized - Cyber DengXian</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+
+<style>
+/* Deklarasi Font DengXian */
+@font-face {
+  font-family: 'DengXian';
+  src: local('DengXian'), local('DengXian Regular'), local('Microsoft YaHei'), local('SimHei'), sans-serif;
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'DengXian';
+  src: local('DengXian Bold'), local('Microsoft YaHei Bold'), local('SimHei'), sans-serif;
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  margin: 0; padding: 0; box-sizing: border-box;
+  font-family: 'DengXian', 'Microsoft YaHei', 'SimHei', sans-serif;
+}
+
+/* Tampilan Layar Utama TV Kiosk */
+html, body {
+  width: 100%;
+  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: radial-gradient(circle at 10% 20%, #080d1a 0%, #020617 90%);
+  color: #f8fafc;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+body::before {
+  content: ''; position: absolute; top: -10%; left: -10%; width: 40%; height: 40%;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0) 70%); pointer-events: none;
+}
+
+body::after {
+  content: ''; position: absolute; bottom: -10%; right: -10%; width: 40%; height: 40%;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(0,0,0,0) 70%); pointer-events: none;
+}
+
+header {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  padding: 15px 30px; display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5); z-index: 10;
+  flex-shrink: 0;
+}
+
+.logo-title h1 {
+  font-size: 2.2rem; font-weight: 800; letter-spacing: 1.5px;
+  color: #38bdf8;
+  text-shadow: 0 0 15px rgba(56, 189, 248, 0.6), 0 0 30px rgba(56, 189, 248, 0.3);
+  text-transform: uppercase;
+}
+
+.logo-title p {
+  color: #94a3b8; font-size: 1rem; margin-top: 3px; font-weight: 700;
+}
+
+.datetime-container {
+  text-align: right; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px);
+  padding: 10px 22px; border-radius: 16px; border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex; align-items: center; gap: 15px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.4);
+}
+
+#clock {
+  font-family: 'JetBrains Mono', 'DengXian', monospace; font-size: 2.4rem; font-weight: 800;
+  color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.8); line-height: 1;
+}
+
+#date {
+  font-size: 1rem; color: #f1f5f9; margin-top: 4px; font-weight: 700;
+}
+
+.btn-setting {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2); padding: 10px 18px; border-radius: 12px;
+  cursor: pointer; font-weight: 700; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.btn-setting:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-color: #60a5fa;
+  transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+}
+
+main { 
+  flex: 1; 
+  padding: 20px 30px; 
+  display: flex; 
+  flex-direction: column; 
+  z-index: 1; 
+  overflow: hidden; 
+  height: calc(100% - 90px);
+}
+
+.table-container {
+  width: 100%; 
+  height: 100%;
+  background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px);
+  border-radius: 20px; overflow-y: auto; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; }
+
+th {
+  position: sticky; top: 0; z-index: 5;
+  background: #0f172a; color: #38bdf8; font-size: 1.1rem; font-weight: 800;
+  padding: 18px 16px; text-transform: uppercase; letter-spacing: 1px;
+  border-bottom: 3px solid rgba(56, 189, 248, 0.4);
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+td {
+  padding: 16px 16px; font-size: 1.1rem; color: #f8fafc;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08); vertical-align: middle; transition: background 0.2s;
+}
+
+tr:hover td { background: rgba(51, 65, 85, 0.4); }
+
+/* TEKS MENYALA & HIGH CONTRAST */
+.col-time { 
+  font-weight: 800; 
+  color: #facc15; 
+  font-family: 'JetBrains Mono', 'DengXian', monospace; 
+  width: 16%; 
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.6); 
+}
+
+.col-event { 
+  font-weight: 800; 
+  color: #ffffff; 
+  width: 18%; 
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); 
+}
+
+.col-leader { 
+  color: #e081ff; 
+  font-weight: 800; 
+  width: 14%; 
+  text-shadow: 0 0 12px rgba(224, 129, 255, 0.6); 
+}
+
+.col-personnel { 
+  color: #38bdf8; 
+  font-weight: 800; 
+  width: 13%; 
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.6); 
+}
+
+.col-gam { 
+  color: #f472b6; 
+  font-weight: 800; 
+  width: 10%; 
+  text-shadow: 0 0 12px rgba(244, 114, 182, 0.6); 
+}
+
+.col-room { 
+  color: #4ade80; 
+  font-weight: 800; 
+  width: 11%; 
+  text-shadow: 0 0 12px rgba(74, 222, 128, 0.6); 
+}
+
+.col-status { text-align: center; width: 9%; }
+.col-action { text-align: center; width: 9%; }
+
+/* BADGE STATUS MENYALA */
+.status-badge {
+  display: inline-block; padding: 8px 14px; border-radius: 20px; font-size: 0.95rem;
+  font-weight: 800; text-transform: uppercase; text-align: center; letter-spacing: 0.5px;
+}
+
+.status-ongoing {
+  background: rgba(59, 130, 246, 0.25); color: #60a5fa;
+  border: 1px solid #60a5fa; box-shadow: 0 0 15px rgba(96, 165, 250, 0.6);
+  animation: pulse-glow 2s infinite;
+}
+
+.status-waiting { 
+  background: rgba(245, 158, 11, 0.25); color: #fbbf24; 
+  border: 1px solid #fbbf24; box-shadow: 0 0 12px rgba(251, 191, 36, 0.5); 
+}
+
+.status-done { 
+  background: rgba(16, 185, 129, 0.25); color: #34d399; 
+  border: 1px solid #34d399; box-shadow: 0 0 12px rgba(52, 211, 153, 0.5); 
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 10px rgba(96, 165, 250, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(96, 165, 250, 0.9); }
+  100% { box-shadow: 0 0 10px rgba(96, 165, 250, 0.5); }
+}
+
+.btn-action-group { display: flex; gap: 8px; justify-content: center; align-items: center; }
+
+.btn-icon {
+  background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px; width: 38px; height: 38px; display: flex; justify-content: center; align-items: center;
+  cursor: pointer; transition: all 0.2s; color: #f8fafc; fill: currentColor;
+}
+
+.btn-icon svg { width: 20px; height: 20px; }
+.btn-edit:hover { background: #f59e0b; border-color: #fbbf24; transform: scale(1.08); }
+.btn-delete:hover { background: #ef4444; border-color: #f87171; transform: scale(1.08); }
+.btn-save { background: #10b981; border-color: #34d399; }
+.btn-save:hover { background: #059669; transform: scale(1.08); }
+
+.edit-input, .edit-select, .edit-date {
+  background: #0f172a; border: 1px solid #3b82f6; color: #f8fafc;
+  padding: 6px 8px; border-radius: 6px; font-size: 0.9rem; width: 100%; font-weight: 700;
+}
+.edit-time-container { display: flex; flex-direction: column; gap: 4px; }
+.edit-time-group { display: flex; align-items: center; gap: 2px; }
+.edit-select { padding: 4px 2px; font-family: 'JetBrains Mono', 'DengXian', monospace; }
+
+/* MODAL PANEL */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center;
+  z-index: 1000; opacity: 0; pointer-events: none; transition: all 0.3s ease;
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.modal-content {
+  background: #0f172a; width: 90%; max-width: 600px;
+  border-radius: 24px; border: 1px solid rgba(56, 189, 248, 0.3); padding: 25px;
+  display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+}
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+.modal-header h2 { font-size: 1.4rem; color: #38bdf8; font-weight: 800; }
+.btn-close { background: none; border: none; color: #94a3b8; font-size: 1.6rem; cursor: pointer; }
+
+.form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.form-group label { font-size: 0.85rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.form-group input, .time-picker-select {
+  background-color: #1e293b; border: 1px solid #334155; color: #f8fafc;
+  padding: 10px 12px; border-radius: 8px; font-size: 0.95rem; width: 100%; color-scheme: dark; font-weight: 700;
+}
+
+.time-picker-group {
+  display: flex; align-items: center; gap: 4px; background-color: #1e293b;
+  border: 1px solid #334155; padding: 4px 8px; border-radius: 8px;
+}
+
+.time-picker-select {
+  border: none; background: transparent; padding: 4px 2px;
+  text-align: center; font-family: 'JetBrains Mono', 'DengXian', monospace; font-weight: 800;
+  color: #38bdf8; font-size: 1rem; cursor: pointer;
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none;
+  padding: 14px; border-radius: 10px; font-weight: 800; cursor: pointer; width: 100%;
+  font-size: 1.1rem; margin-top: 10px; transition: all 0.2s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+.btn-add:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6); }
+
+#tizenAudioUnlocker {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(2, 6, 23, 0.96); z-index: 99999;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  color: white; text-align: center; padding: 20px;
+}
+</style>
 </head>
 <body>
 
-<div id="sidebar">
-    <div class="header">
-        <div style="font-size: 10px; color: var(--accent);">KORPASGAT TACTICAL RADAR</div>
-        <div id="clock">00:00:00</div>
-    </div>
-    <div class="form">
-        <label style="font-size:10px;">CALLSIGN</label>
-        <input type="text" id="pesawat" value="C-130">
-        <div style="display:flex; gap:5px;">
-            <select id="asal"></select>
-            <select id="tujuan"></select>
-        </div>
-        <input type="datetime-local" id="takeoff">
-        <div style="display:flex; gap:5px;">
-            <select id="tipe" style="flex:2;"><option value="500">HERCULES (500 km/h)</option></select>
-            <input type="color" id="warna" value="#ff851b" style="flex:1;">
-        </div>
-        <button class="btn" onclick="kirimMisi()">🚀 DEPLOY MISSION</button>
-    </div>
-    <div id="flight-list" style="flex:1; overflow-y:auto; padding:10px; background:#010409;"></div>
+<div id="tizenAudioUnlocker">
+  <h1 style="font-size: 2.5rem; margin-bottom: 15px; color: #38bdf8; font-weight: 800; text-shadow: 0 0 15px rgba(56,189,248,0.5);">SISTEM MONITORING JADWAL</h1>
+  <p style="font-size: 1.2rem; margin-bottom: 30px; color: #94a3b8; max-width: 500px; font-weight: bold;">Tekan tombol OK / Enter pada remote TV untuk mengaktifkan audio otomatis & Fullscreen.</p>
+  <button id="btnUnlockTizen" onclick="bukaKunciAudioTizen()" style="padding: 18px 40px; font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 14px; cursor: pointer; box-shadow: 0 10px 30px rgba(16,185,129,0.5);" autofocus>
+    🔊 TEKAN UNTUK AKTIFKAN SUARA
+  </button>
 </div>
-<div id="map"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<header>
+  <div class="logo-title">
+    <h1>JADWAL KEGIATAN & AGENDA UTAMA SLOG KORPASGAT</h1>
+    <p>Monitoring Waktu, Pimpinan Rapat, dan Lokasi Ruangan</p>
+  </div>
+  <div class="datetime-container">
+    <div>
+      <div id="clock">00:00</div>
+      <div id="date">Memuat Tanggal...</div>
+    </div>
+    <button class="btn-setting" onclick="toggleModal(true)">➕ Tambah Agenda</button>
+  </div>
+</header>
+
+<main>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th class="col-time">Tanggal & Waktu</th>
+          <th class="col-event">Nama Kegiatan</th>
+          <th class="col-leader">Pimpinan</th>
+          <th class="col-personnel">Personel</th>
+          <th class="col-gam">GAM</th>
+          <th class="col-room">Lokasi</th>
+          <th class="col-status">Status</th>
+          <th class="col-action">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="main-table-body">
+        <tr><td colspan="8" style="text-align: center; color: #94a3b8;">Menghubungkan ke Database Online Global...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<div class="modal-overlay" id="settingModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>➕ Tambah Agenda Baru</h2>
+      <button class="btn-close" onclick="toggleModal(false)">✕</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputTglMulai">Tanggal Mulai:</label>
+        <input type="date" id="inputTglMulai">
+      </div>
+      <div class="form-group">
+        <label for="inputTglSelesai">Tanggal Selesai:</label>
+        <input type="date" id="inputTglSelesai">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Jam Mulai (HH:MM):</label>
+        <div class="time-picker-group">
+          <select id="startHour" class="time-picker-select"></select><span>:</span>
+          <select id="startMinute" class="time-picker-select"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Jam Selesai (HH:MM):</label>
+        <div class="time-picker-group">
+          <select id="endHour" class="time-picker-select"></select><span>:</span>
+          <select id="endMinute" class="time-picker-select"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="inputKegiatan">Nama Kegiatan:</label>
+      <input type="text" id="inputKegiatan" placeholder="Nama Agenda / Kegiatan Utama">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputPimpinan">Pimpinan Rapat:</label>
+        <input type="text" id="inputPimpinan" placeholder="Contoh: Danpasgat, Aslog">
+      </div>
+      <div class="form-group">
+        <label for="inputPersonel">Personel / Peserta:</label>
+        <input type="text" id="inputPersonel" placeholder="Contoh: Perwira Staf">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="inputGam">GAM:</label>
+        <input type="text" id="inputGam" placeholder="Contoh: PDU, PDL">
+      </div>
+      <div class="form-group">
+        <label for="inputLokasi">Lokasi Ruangan:</label>
+        <input type="text" id="inputLokasi" placeholder="Lokasi Ruang / Tempat">
+      </div>
+    </div>
+
+    <button class="btn-add" id="btnAdd" onclick="addNewSchedule()">＋ Simpan ke Database</button>
+  </div>
+</div>
+
 <script>
-    const firebaseConfig = { databaseURL: "https://kodal-logistik-korpasgat-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+const dbURL = "https://api.npoint.io/79fb87bf4e7964927964";
 
-    const map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5);
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
+let systemSchedules = [];
+let currentHours = "00";
+let currentMinutes = "00";
+let editingRowIndex = -1;
+let spokenSchedules = new Set();
+let audioCtx = null;
 
-    const lanuds = [
-             { nama: "Sabang (SBG) - Lanud Maimun Saleh", lat: 5.8753, lng: 95.3375 },
-            { nama: "Banda Aceh (BTJ) - Sultan Iskandar Muda", lat: 5.5239, lng: 95.4197 },
-            { nama: "Medan (MES) - Lanud Soewondo", lat: 3.5623, lng: 98.6837 },
-            { nama: "Pekanbaru (PKU) - Lanud Roesmin Nurjadin", lat: 0.4611, lng: 101.4483 },
-            { nama: "Ranai (NTX) - Lanud Raden Sadjad (Natuna)", lat: 3.9453, lng: 108.3871 },
-            { nama: "Palembang (PLM) - Lanud Sri Mulyono Herlambang", lat: -2.8981, lng: 104.7001 },
-            { nama: "Jakarta (HLP) - Lanud Halim Perdanakusuma", lat: -6.2655, lng: 106.8906 },
-            { nama: "Bandung (BDO) - Lanud Husein Sastranegara", lat: -6.9009, lng: 107.5768 },
-            { nama: "Madiun (IWX) - Lanud Iswahjudi", lat: -7.6158, lng: 111.4338 },
-            { nama: "Malang (MLG) - Lanud Abdul Rachman Saleh", lat: -7.9264, lng: 112.7135 },
-            { nama: "Pontianak (PNK) - Lanud Supadio", lat: -0.1507, lng: 109.4039 },
-            { nama: "Balikpapan (BPN) - Lanud Dhomber", lat: -1.2683, lng: 116.8944 },
-            { nama: "Tarakan (TRK) - Lanud Anang Busra", lat: 3.3262, lng: 117.5647 },
-            { nama: "Makassar (UPG) - Lanud Sultan Hasanuddin", lat: -5.0616, lng: 119.5539 },
-            { nama: "Manado (MDC) - Lanud Sam Ratulangi", lat: 1.5492, lng: 124.9268 },
-            { nama: "Denpasar (DPS) - Ngurah Rai", lat: -8.7481, lng: 115.1671 },
-            { nama: "Kupang (KOE) - Lanud El Tari", lat: -10.1705, lng: 123.6653 },
-            { nama: "Ambon (AMQ) - Lanud Pattimura", lat: -3.7049, lng: 128.0890 },
-            { nama: "Biak (BIK) - Lanud Manuhua", lat: -1.1911, lng: 136.1086 },
-            { nama: "Jayapura (DJJ) - Lanud Silas Papare", lat: -2.5765, lng: 140.5158 },
-            { nama: "Timika (TIM) - Lanud Yohanis Kapiyau", lat: -4.5296, lng: 136.8870 },
-            { nama: "Merauke (MKQ) - Lanud J.A. Dimara", lat: -8.5208, lng: 140.4184 }
-    ];
+const iconPencil = '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+const iconTrash = '<svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+const iconSave = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>';
 
-    let liveMissions = {};
+function requestFullScreenNative() {
+  const elem = document.documentElement;
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) {
+    elem.msRequestFullscreen();
+  }
+}
 
-    db.ref('missions').on('value', snap => {
-        const data = snap.val();
-        const listDiv = document.getElementById('flight-list');
-        listDiv.innerHTML = "";
-        
-        // Clear existing
-        Object.values(liveMissions).forEach(m => { map.removeLayer(m.marker); map.removeLayer(m.line); clearInterval(m.timer); });
-        liveMissions = {};
+function generateOptionsHTML(max, selectedVal) {
+  let html = '';
+  for (let i = 0; i < max; i++) {
+    const val = String(i).padStart(2, '0');
+    html += '<option value="' + val + '" ' + (val === selectedVal ? 'selected' : '') + '>' + val + '</option>';
+  }
+  return html;
+}
 
-        if (data) {
-            Object.keys(data).forEach(id => {
-                const v = data[id];
-                listDiv.innerHTML += `<div style="padding:8px; margin-bottom:5px; border-left:4px solid ${v.warna}; background:#161b22; font-size:12px;"><b>${v.pesawat}</b><br>ETA: ${v.eta}</div>`;
+function initTimePickers() {
+  const populateOptions = (selectId, max) => {
+    const sel = document.getElementById(selectId);
+    if(!sel) return;
+    sel.innerHTML = generateOptionsHTML(max, '00');
+  };
 
-                // Garis Rute
-                const line = L.polyline([[v.lat, v.lng], [v.dLat, v.dLng]], {color: v.warna, weight: 1, dashArray: '5,5', opacity: 0.5}).addTo(map);
+  populateOptions('startHour', 24);
+  populateOptions('startMinute', 60);
+  populateOptions('endHour', 24);
+  populateOptions('endMinute', 60);
+}
 
-                // LOGIKA BEARING (Kunci Arah)
-                const dy = v.dLat - v.lat;
-                const dx = v.dLng - v.lng;
-                const theta = Math.atan2(dy, dx);
-                let angle = (theta * 180 / Math.PI); 
-                // FontAwesome Plane menghadap 0 derajat (kanan/Timur) secara default di CSS
-                // Tapi kita ingin dia menghadap "Atas" (Utara) sebagai 0 derajat
-                const rotation = 90 - angle; 
+function initAudioEngine() {
+  if (!audioCtx) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (AudioContextClass) audioCtx = new AudioContextClass();
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
 
-                const marker = L.marker([v.lat, v.lng], {
-                    icon: L.divIcon({
-                        className: 'plane-wrapper',
-                        html: `<div style="transform: rotate(${-rotation}deg);" class="rotated-plane">
-                                 <i class="fa-solid fa-plane" style="color:${v.warna}; font-size:24px;"></i>
-                               </div>
-                               <div class="plane-label">${v.pesawat}</div>`,
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
-                    })
-                }).addTo(map);
+function bukaKunciAudioTizen() {
+  initAudioEngine();
+  requestFullScreenNative();
+  document.getElementById('tizenAudioUnlocker').style.display = 'none';
+  playChimeNotification([523.25, 659.25, 783.99]);
+}
 
-                const takeoffTime = new Date(v.takeoff_manual).getTime();
-                const totalDur = v.eet_min * 60000;
+function playTone(freq, type, duration, delay = 0) {
+  initAudioEngine();
+  if (!audioCtx) return;
 
-                const timer = setInterval(() => {
-                    let progress = (Date.now() - takeoffTime) / totalDur;
-                    if (progress < 0) progress = 0;
-                    if (progress >= 1) { progress = 1; clearInterval(timer); }
-                    
-                    const nowLat = v.lat + (v.dLat - v.lat) * progress;
-                    const nowLng = v.lng + (v.dLng - v.lng) * progress;
-                    marker.setLatLng([nowLat, nowLng]);
-                }, 1000);
+  setTimeout(() => {
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
 
-                liveMissions[id] = { marker, line, timer };
-            });
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {
+      console.error(e);
+    }
+  }, delay);
+}
+
+function playChimeNotification(freqs = [440, 554.37, 659.25]) {
+  freqs.forEach((f, i) => {
+    playTone(f, 'sine', 0.8, i * 250);
+  });
+}
+
+function panggilSuaraAI(teks) {
+  playChimeNotification([523.25, 659.25, 783.99, 1046.50]);
+
+  setTimeout(() => {
+    try {
+      const existingAudio = document.getElementById('audioTTS');
+      if (existingAudio) existingAudio.remove();
+
+      const encodedText = encodeURIComponent(teks);
+      const ttsUrl = 'https://translate.google.com/translate_tts?ie=UTF-8&q=' + encodedText + '&tl=id&client=tw-ob';
+
+      const audio = new Audio(ttsUrl);
+      audio.id = 'audioTTS';
+      audio.playbackRate = 0.95;
+      audio.play().catch(() => {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const speech = new SpeechSynthesisUtterance(teks);
+          speech.lang = 'id-ID';
+          speech.pitch = 1.2;
+          window.speechSynthesis.speak(speech);
         }
+      });
+    } catch (e) {
+      console.error("Gagal memutar audio TTS:", e);
+    }
+  }, 1200);
+}
+
+function updateDateTime() {
+  try {
+    const now = new Date();
+    currentHours = String(now.getHours()).padStart(2, '0');
+    currentMinutes = String(now.getMinutes()).padStart(2, '0');
+
+    document.getElementById('clock').textContent = currentHours + ':' + currentMinutes;
+
+    const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+    document.getElementById('date').textContent = now.toLocaleDateString('id-ID', options);
+
+    updateStatusBadges();
+  } catch(err) { console.error(err); }
+}
+
+async function loadDataFromCloud() {
+  if (editingRowIndex !== -1) return;
+  try {
+    const response = await fetch(dbURL + '?_=' + new Date().getTime());
+    if (!response.ok) throw new Error("Gagal mengambil data dari server online");
+
+    systemSchedules = await response.json();
+    if (!Array.isArray(systemSchedules)) systemSchedules = [];
+    renderSchedules(false);
+  } catch (e) {
+    console.error("Error mengambil data dari cloud:", e);
+  }
+}
+
+async function saveDataToCloud() {
+  try {
+    await fetch(dbURL, {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(systemSchedules)
     });
+  } catch (e) {
+    console.error("Gagal menyimpan data ke cloud:", e);
+  }
+}
 
-    function kirimMisi() {
-        const asal = document.getElementById('asal').value.split('|');
-        const tujuan = document.getElementById('tujuan').value.split('|');
-        if(!asal[0] || !tujuan[0]) return;
+function formatTanggalIndo(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
 
-        const dLat = parseFloat(tujuan[0]), dLng = parseFloat(tujuan[1]);
-        const sLat = parseFloat(asal[0]), sLng = parseFloat(asal[1]);
-        
-        // Jarak sederhana
-        const dist = Math.sqrt(Math.pow(dLat-sLat, 2) + Math.pow(dLng-sLng, 2)) * 111;
-        const eet = Math.round((dist / parseInt(document.getElementById('tipe').value)) * 60);
+function renderSchedules(shouldSave = true) {
+  const mainTbody = document.getElementById('main-table-body');
+  if (!mainTbody) return;
 
-        db.ref('missions').push({
-            pesawat: document.getElementById('pesawat').value.toUpperCase(),
-            takeoff_manual: document.getElementById('takeoff').value,
-            warna: document.getElementById('warna').value,
-            lat: sLat, lng: sLng, dLat: dLat, dLng: dLng,
-            eet_min: eet,
-            eta: new Date(new Date(document.getElementById('takeoff').value).getTime() + (eet * 60000)).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'})
-        });
+  mainTbody.innerHTML = '';
+
+  if (systemSchedules.length === 0) {
+    mainTbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; font-weight: bold;">Tidak ada agenda kegiatan saat ini. Klik + Tambah Agenda untuk membuat baru.</td></tr>';
+    if (shouldSave) saveDataToCloud();
+    return;
+  }
+
+  systemSchedules.sort((a, b) => {
+    const dateA = new Date((a.tglMulai || '') + 'T' + (a.waktu.split('-')[0] || '00:00').trim().replace(/\./g, ':'));
+    const dateB = new Date((b.tglMulai || '') + 'T' + (b.waktu.split('-')[0] || '00:00').trim().replace(/\./g, ':'));
+    return dateA - dateB;
+  });
+
+  systemSchedules.forEach((item, index) => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('id', 'row-' + index);
+    
+    if (editingRowIndex === index) {
+      const parts = (item.waktu || '08:00 - 10:00').split('-');
+      const sParts = parts[0].trim().split(':');
+      const eParts = (parts[1] || '10:00').trim().split(':');
+
+      tr.innerHTML = 
+        '<td class="col-time">' +
+          '<div style="display:flex; flex-direction:column; gap:4px;">' +
+            '<input type="date" class="edit-date" id="edit-tglMulai" value="' + item.tglMulai + '">' +
+            '<input type="date" class="edit-date" id="edit-tglSelesai" value="' + (item.tglSelesai || item.tglMulai) + '">' +
+            '<div class="edit-time-container">' +
+              '<div class="edit-time-group">' +
+                '<select id="edit-sH" class="edit-select">' + generateOptionsHTML(24, sParts[0]) + '</select>:' +
+                '<select id="edit-sM" class="edit-select">' + generateOptionsHTML(60, sParts[1]) + '</select>' +
+              '</div>' +
+              '<div class="edit-time-group">' +
+                '<select id="edit-eH" class="edit-select">' + generateOptionsHTML(24, eParts[0]) + '</select>:' +
+                '<select id="edit-eM" class="edit-select">' + generateOptionsHTML(60, eParts[1]) + '</select>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</td>' +
+        '<td class="col-event"><input type="text" class="edit-input" id="edit-kegiatan" value="' + item.kegiatan + '"></td>' +
+        '<td class="col-leader"><input type="text" class="edit-input" id="edit-pimpinan" value="' + (item.pimpinan || '') + '"></td>' +
+        '<td class="col-personnel"><input type="text" class="edit-input" id="edit-personel" value="' + (item.personel || '') + '"></td>' +
+        '<td class="col-gam"><input type="text" class="edit-input" id="edit-gam" value="' + (item.gam || '') + '"></td>' +
+        '<td class="col-room"><input type="text" class="edit-input" id="edit-lokasi" value="' + item.lokasi + '"></td>' +
+        '<td class="col-status"><span class="status-badge status-waiting">Edit Mode</span></td>' +
+        '<td class="col-action">' +
+          '<div class="btn-action-group">' +
+            '<button class="btn-icon btn-save" onclick="saveInlineEdit(' + index + ')" title="Simpan">' + iconSave + '</button>' +
+          '</div>' +
+        '</td>';
+    } else {
+      const cleanTimeRange = item.waktu.replace(/\s+/g, '');
+      tr.setAttribute('data-time', cleanTimeRange);
+      tr.setAttribute('data-start-date', item.tglMulai || '');
+      tr.setAttribute('data-end-date', item.tglSelesai || '');
+      tr.setAttribute('data-index', index);
+
+      let displayTanggal = '';
+      if (item.tglMulai === item.tglSelesai) {
+        displayTanggal = formatTanggalIndo(item.tglMulai);
+      } else {
+        displayTanggal = formatTanggalIndo(item.tglMulai) + ' s/d ' + formatTanggalIndo(item.tglSelesai);
+      }
+
+      tr.innerHTML = 
+        '<td class="col-time">' +
+          '<div style="font-size:0.85rem; color:#cbd5e1; font-weight:normal; margin-bottom:2px;">' + displayTanggal + '</div>' +
+          '<div>' + item.waktu + '</div>' +
+        '</td>' +
+        '<td class="col-event">' + item.kegiatan + '</td>' +
+        '<td class="col-leader">' + (item.pimpinan || '-') + '</td>' +
+        '<td class="col-personnel">' + (item.personel || '-') + '</td>' +
+        '<td class="col-gam">' + (item.gam || '-') + '</td>' +
+        '<td class="col-room">' + item.lokasi + '</td>' +
+        '<td class="col-status"><span class="status-badge">Memuat...</span></td>' +
+        '<td class="col-action">' +
+          '<div class="btn-action-group">' +
+            '<button class="btn-icon btn-edit" onclick="enableInlineEdit(' + index + ')" title="Edit">' + iconPencil + '</button>' +
+            '<button class="btn-icon btn-delete" onclick="deleteSchedule(' + index + ')" title="Hapus">' + iconTrash + '</button>' +
+          '</div>' +
+        '</td>';
     }
 
-    // Init
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID', {hour12: false}); }, 1000);
-    lanuds.forEach(l => {
-        const opt = `<option value="${l.lat}|${l.lng}">${l.name}</option>`;
-        document.getElementById('asal').innerHTML += opt;
-        document.getElementById('tujuan').innerHTML += opt;
+    mainTbody.appendChild(tr);
+  });
+
+  updateStatusBadges();
+  if (shouldSave) saveDataToCloud();
+}
+
+function enableInlineEdit(index) {
+  editingRowIndex = index;
+  renderSchedules(false);
+}
+
+function saveInlineEdit(index) {
+  const tglMulai = document.getElementById('edit-tglMulai').value;
+  const tglSelesai = document.getElementById('edit-tglSelesai').value;
+  
+  const sH = document.getElementById('edit-sH').value;
+  const sM = document.getElementById('edit-sM').value;
+
+  const eH = document.getElementById('edit-eH').value;
+  const eM = document.getElementById('edit-eM').value;
+
+  const kegiatan = document.getElementById('edit-kegiatan').value.trim();
+  const pimpinan = document.getElementById('edit-pimpinan').value.trim();
+  const personel = document.getElementById('edit-personel').value.trim();
+  const gam = document.getElementById('edit-gam').value.trim();
+  const lokasi = document.getElementById('edit-lokasi').value.trim();
+
+  if (!tglMulai || !tglSelesai || !kegiatan || !lokasi) {
+    return alert("Lengkapi data tanggal, kegiatan, dan lokasi!");
+  }
+
+  const oldItem = systemSchedules[index];
+  const oldKey = oldItem.tglMulai + '-' + oldItem.tglSelesai + '-' + oldItem.waktu.replace(/\s+/g, '') + '-' + oldItem.kegiatan;
+  spokenSchedules.delete(oldKey + '-menunggu');
+  spokenSchedules.delete(oldKey + '-berlangsung');
+  spokenSchedules.delete(oldKey + '-selesai');
+
+  systemSchedules[index] = {
+    tglMulai, tglSelesai,
+    waktu: sH + ':' + sM + ' - ' + eH + ':' + eM,
+    kegiatan, pimpinan, personel, gam, lokasi
+  };
+
+  editingRowIndex = -1;
+  renderSchedules(true);
+}
+
+function deleteSchedule(index) {
+  if (confirm("Apakah Anda yakin ingin menghapus agenda ini?")) {
+    systemSchedules.splice(index, 1);
+    renderSchedules(true);
+  }
+}
+
+async function addNewSchedule() {
+  const tglMulai = document.getElementById('inputTglMulai').value;
+  const tglSelesai = document.getElementById('inputTglSelesai').value;
+  
+  const sH = document.getElementById('startHour').value;
+  const sM = document.getElementById('startMinute').value;
+
+  const eH = document.getElementById('endHour').value;
+  const eM = document.getElementById('endMinute').value;
+
+  const waktu = sH + ':' + sM + ' - ' + eH + ':' + eM;
+  const kegiatan = document.getElementById('inputKegiatan').value.trim();
+  const pimpinan = document.getElementById('inputPimpinan').value.trim();
+  const personel = document.getElementById('inputPersonel').value.trim();
+  const gam = document.getElementById('inputGam').value.trim();
+  const lokasi = document.getElementById('inputLokasi').value.trim();
+
+  if (!tglMulai || !tglSelesai || !kegiatan || !lokasi) {
+    return alert("Silakan lengkapi tanggal, kegiatan, dan lokasi!");
+  }
+
+  systemSchedules.push({ tglMulai, tglSelesai, waktu, kegiatan, pimpinan, personel, gam, lokasi });
+  renderSchedules(true);
+  
+  document.getElementById('inputKegiatan').value = '';
+  document.getElementById('inputPimpinan').value = '';
+  document.getElementById('inputPersonel').value = '';
+  document.getElementById('inputGam').value = '';
+  document.getElementById('inputLokasi').value = '';
+  toggleModal(false);
+}
+
+function updateStatusBadges() {
+  if (editingRowIndex !== -1) return;
+
+  const now = new Date();
+  const waktuSekarangLengkap = now.getTime();
+  const indicesToRemove = [];
+
+  document.querySelectorAll('#main-table-body tr[data-time]').forEach(row => {
+    try {
+      const idx = parseInt(row.getAttribute('data-index'));
+      const timeRange = row.getAttribute('data-time');
+      const startDateStr = row.getAttribute('data-start-date');
+      const endDateStr = row.getAttribute('data-end-date');
+      if (!timeRange || !timeRange.includes('-') || !startDateStr || !endDateStr) return;
+
+      const eventName = row.querySelector('.col-event').textContent || '';
+      const leaderName = row.querySelector('.col-leader').textContent || '';
+      const roomName = row.querySelector('.col-room').textContent || '';
+      const badge = row.querySelector('.status-badge');
+      if (!badge) return;
+
+      const cleanTimeRange = timeRange.replace(/\./g, ':');
+      const [startTime, endTime] = cleanTimeRange.split('-');
+      
+      const startParts = startTime.split(':').map(Number);
+      const endParts = endTime.split(':').map(Number);
+
+      const jamMulai = startParts[0], menitMulai = startParts[1] || 0;
+      const jamSelesai = endParts[0], menitSelesai = endParts[1] || 0;
+
+      const waktuMulaiLengkap = new Date(startDateStr).setHours(jamMulai, menitMulai, 0, 0);
+      const waktuSelesaiLengkap = new Date(endDateStr).setHours(jamSelesai, menitSelesai, 59, 999);
+
+      badge.className = 'status-badge';
+      const baseKey = startDateStr + '-' + endDateStr + '-' + timeRange + '-' + eventName;
+      
+      let pimpinanText = (leaderName && leaderName !== '-') ? ', dipimpin oleh ' + leaderName : '';
+
+      if (waktuSekarangLengkap > waktuSelesaiLengkap) {
+        badge.textContent = 'Selesai';
+        badge.className = 'status-badge status-done';
+
+        const keySelesai = baseKey + '-selesai';
+        if (!spokenSchedules.has(keySelesai)) {
+          spokenSchedules.add(keySelesai);
+          panggilSuaraAI('Informasi, kegiatan ' + eventName + pimpinanText + ' di lokasi ' + roomName + ' telah selesai.');
+        }
+
+        // Tandai indeks jadwal untuk dihapus otomatis
+        if (!isNaN(idx) && !indicesToRemove.includes(idx)) {
+          indicesToRemove.push(idx);
+        }
+
+      } else if (waktuSekarangLengkap >= waktuMulaiLengkap && waktuSekarangLengkap <= waktuSelesaiLengkap) {
+        badge.textContent = 'Berlangsung';
+        badge.className = 'status-badge status-ongoing';
+
+        const keyBerlangsung = baseKey + '-berlangsung';
+        if (!spokenSchedules.has(keyBerlangsung)) {
+          spokenSchedules.add(keyBerlangsung);
+          panggilSuaraAI('Perhatian, kegiatan ' + eventName + pimpinanText + ' di lokasi ' + roomName + ' sedang berlangsung.');
+        }
+
+      } else {
+        badge.textContent = 'Menunggu';
+        badge.className = 'status-badge status-waiting';
+
+        const keyMenunggu = baseKey + '-menunggu';
+        if (!spokenSchedules.has(keyMenunggu)) {
+          spokenSchedules.add(keyMenunggu);
+          panggilSuaraAI('Pemberitahuan, kegiatan ' + eventName + pimpinanText + ' di lokasi ' + roomName + ' dalam status menunggu.');
+        }
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  });
+
+  // Hapus otomatis jadwal yang sudah selesai & perbarui cloud database
+  if (indicesToRemove.length > 0) {
+    indicesToRemove.sort((a, b) => b - a);
+    indicesToRemove.forEach(index => {
+      systemSchedules.splice(index, 1);
     });
-    document.getElementById('takeoff').value = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    renderSchedules(true);
+  }
+}
+
+function toggleModal(show) {
+  document.getElementById('settingModal').classList.toggle('active', show);
+}
+
+// Inisialisasi awal
+initTimePickers();
+setInterval(updateDateTime, 1000);
+updateDateTime();
+loadDataFromCloud();
+setInterval(loadDataFromCloud, 5000);
 </script>
 </body>
 </html>
